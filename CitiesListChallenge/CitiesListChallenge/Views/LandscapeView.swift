@@ -10,41 +10,34 @@ import MapKit
 import SwiftData
 
 struct LandscapeView: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var viewModel: CityListViewModel
+    @State var viewModel: CityListViewModel
     
     @Binding var selectedCityForLandscapeMap: City?
     @State private var showingCityDetail: City? = nil
     
-    init(selectedCityForLandscapeMap: Binding<City?>) {
-        self._selectedCityForLandscapeMap = selectedCityForLandscapeMap
-        let dataStore = DataStore(modelContext: ModelContext(try! ModelContainer(for: City.self)))
-        _viewModel = State(wrappedValue: CityListViewModel(dataStore: dataStore))
-    }
-    
     var body: some View {
         NavigationView {
             HStack {
+                // Left side: City list
                 VStack {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        TextField("Search cities...", text: $viewModel.searchText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    .padding()
+                    // Favorites toggle
                     Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
                         .padding(.horizontal)
+                    
+                    // City list
                     List {
                         ForEach(viewModel.cities) { city in
                             CityRowView(
                                 city: city,
                                 onFavoriteToggle: {
                                     viewModel.toggleFavorite(forCityID: city.id)
-                                }, onRowTap: {
+                                },
+                                onShowDetailToggle: {
                                     showingCityDetail = city
+                                },
+                                onRowTap: {
+                                    selectedCityForLandscapeMap = city
                                 }
-                                
                             )
                         }
                         
@@ -55,30 +48,25 @@ struct LandscapeView: View {
                                 }
                         }
                     }
-                    .listStyle(PlainListStyle())
+                    .listStyle(.plain)
                 }
-                .frame(minWidth: 300, maxWidth: 400)
+                .frame(width: 300)
+                .searchable(text: $viewModel.searchText)
+                .navigationTitle("Cities")
                 
+                // Right side: Map
                 if let selectedCity = selectedCityForLandscapeMap {
                     MapView(city: selectedCity)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    VStack {
-                        Image(systemName: "map.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text("Select a city to see it on the map.")
-                            .padding()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Text("Select a city to view on map")
+                        .foregroundColor(.gray)
                 }
             }
-            .navigationTitle("Cities")
             .task {
                 await viewModel.loadInitialDataIfNeeded()
             }
             .sheet(item: $showingCityDetail) { city in
-                NavigationView {
+                NavigationStack {
                     CityDetailView(city: city)
                         .navigationTitle("Details: \(city.name)")
                         .toolbar {
@@ -97,7 +85,10 @@ struct LandscapeView_Previews: PreviewProvider {
         struct PreviewWrapper: View {
             @State private var previewSelectedCity: City? = nil
             var body: some View {
-                LandscapeView(selectedCityForLandscapeMap: $previewSelectedCity)
+                LandscapeView(
+                    viewModel: CityListViewModel(dataStore: MockDataStore(repository: MockCityRepository(), networkService: MockNetworkService())),
+                    selectedCityForLandscapeMap: $previewSelectedCity
+                )
                     .modelContainer(for: City.self, inMemory: true)
             }
         }

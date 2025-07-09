@@ -10,8 +10,8 @@ import SwiftData
 import Combine
 
 @Observable @MainActor
-class CityListViewModel{
-    private let dataStore: DataStore
+class CityListViewModel {
+    private let dataStore: DataStoreProtocol
     private var cancellables = Set<AnyCancellable>()
     
     var searchText: String = "" {
@@ -38,7 +38,7 @@ class CityListViewModel{
     private var currentPage = 0
     private var hasInitialized = false
     
-    init(dataStore: DataStore) {
+    init(dataStore: DataStoreProtocol) {
         self.dataStore = dataStore
         setupSearchSubscription()
     }
@@ -76,17 +76,20 @@ class CityListViewModel{
         guard hasMorePages && !isLoading else { return }
         isLoading = true
         errorMessage = nil
-        let result = dataStore.searchCities(
-            prefix: searchText,
-            onlyFavorites: showOnlyFavorites,
-            page: currentPage,
-            pageSize: pageSize
-        )
         
-        cities = currentPage == 0 ? result.cities : cities + result.cities
-        hasMorePages = result.cities.count == pageSize
-        currentPage += 1
-        isLoading = false
+        Task {
+            let result = await dataStore.searchCities(
+                prefix: searchText,
+                onlyFavorites: showOnlyFavorites,
+                page: currentPage,
+                pageSize: pageSize
+            )
+            
+            cities = currentPage == 0 ? result.cities : cities + result.cities
+            hasMorePages = result.cities.count == pageSize
+            currentPage += 1
+            isLoading = false
+        }
     }
     
     func toggleFavorite(forCityID cityID: Int) {

@@ -10,16 +10,10 @@ import SwiftUI
 import SwiftData
 
 struct CityListView: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var viewModel: CityListViewModel
+    @State var viewModel: CityListViewModel
     
     @State private var selectedCityForMap: City? = nil
     @State private var showingCityDetail: City? = nil
-    
-    init() {
-        let dataStore = DataStore(modelContext: ModelContext(try! ModelContainer(for: City.self)))
-        _viewModel = State(wrappedValue: CityListViewModel(dataStore: dataStore))
-    }
     
     var body: some View {
         NavigationStack {
@@ -29,15 +23,20 @@ struct CityListView: View {
                 
                 List{
                     ForEach(viewModel.cities) { city in
-                        CityRowView(
-                            city: city,
-                            onFavoriteToggle: {
-                                viewModel.toggleFavorite(forCityID: city.id)
-                            },
-                            onRowTap: {
-                                showingCityDetail = city
-                            }
-                        )
+                        NavigationLink(destination: CityDetailView(city: city)) {
+                            CityRowView(
+                                city: city,
+                                onFavoriteToggle: {
+                                    viewModel.toggleFavorite(forCityID: city.id)
+                                }, onShowDetailToggle: {
+                                    showingCityDetail = city
+                                },
+                                onRowTap: {
+                                    selectedCityForMap = city
+                                    //showingCityDetail = city
+                                }
+                            )
+                        }
                     }
                     if viewModel.hasMorePages {
                         ProgressView()
@@ -54,8 +53,11 @@ struct CityListView: View {
             .task {
                 await viewModel.loadInitialDataIfNeeded()
              }
+            .navigationDestination(item: $selectedCityForMap, destination: { city in
+                MapView(city: city)
+            })
             .sheet(item: $showingCityDetail) { city in
-                NavigationView {
+                NavigationStack {
                     CityDetailView(city: city)
                         .navigationTitle("Details: \(city.name)")
                         .toolbar {
@@ -73,7 +75,7 @@ struct CityListView: View {
 struct CityListView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            CityListView()
+            CityListView(viewModel: CityListViewModel(dataStore: MockDataStore(repository: MockCityRepository(), networkService: MockNetworkService())))
                 .modelContainer(for: City.self, inMemory: true)
         }
     }

@@ -10,56 +10,49 @@ import MapKit
 
 struct MapView: View {
     let city: City
-
-    @State private var region: MKCoordinateRegion
-
+    
     struct AnnotatedItem: Identifiable {
         let id = UUID()
         let name: String
         let coordinate: CLLocationCoordinate2D
     }
-
-    private var annotatedItem: [AnnotatedItem]
-
-    init(city: City) {
-        self.city = city
-        let coordinate = CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon)
-        _region = State(initialValue: MKCoordinateRegion(
-            center: coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05) // Adjust span for desired zoom
-        ))
-        self.annotatedItem = [
-            AnnotatedItem(name: city.name, coordinate: coordinate)
-        ]
+    
+    private var annotatedItem: AnnotatedItem {
+        AnnotatedItem(
+            name: city.name,
+            coordinate: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon)
+        )
     }
-
+    
     var body: some View {
-        Map(coordinateRegion: $region, annotationItems: annotatedItem) { item in
-            MapMarker(coordinate: item.coordinate, tint: .blue)
+        Map(initialPosition: .region(initialRegion)) {
+            Marker(annotatedItem.name, coordinate: annotatedItem.coordinate)
         }
-        .onAppear {
-            let coordinate = CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon)
-            region = MKCoordinateRegion(
-                center: coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-            )
-        }
+        .mapStyle(.standard)
+        .navigationTitle(city.name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private var initialRegion: MKCoordinateRegion {
+        MKCoordinateRegion(
+            center: annotatedItem.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
     }
 }
 
-
 #Preview {
-    let previewCity = City(id: 1, name: "Morelai", country: "MX", coord_lon: -100.0, coord_lat: 37.8, isFavorite: false)
-    
+    let previewCity = City(id: 1, name: "Cupertino", country: "US", coord_lon: -122.0321823, coord_lat: 37.3229978, isFavorite: false)
     return NavigationView {
         MapView(city: previewCity)
             .navigationTitle("Map: \(previewCity.name)")
             .toolbar {
-                 ToolbarItem(placement: .navigationBarLeading) {
-                     Button("Done") {
-                         print("Done button tapped in preview")
-                     }
-                 }
-             }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Done") {
+                        print("Done button tapped in preview")
+                    }
+                }
+            }
     }
 }
+

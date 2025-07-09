@@ -10,6 +10,7 @@ import SwiftUI
 struct CityRowView: View {
     let city: City
     let onFavoriteToggle: () -> Void
+    let onShowDetailToggle: () -> Void
     let onRowTap: () -> Void
     
     var body: some View {
@@ -29,6 +30,14 @@ struct CityRowView: View {
                 onRowTap()
             }
             Button {
+                onShowDetailToggle()
+            } label: {
+                Image(systemName: "info.circle")
+                    .foregroundColor(.primary)
+                    .frame(width: 24, height: 24)
+            }
+            .buttonStyle(.plain)
+            Button {
                 print("favourite button tapped")
                 onFavoriteToggle()
             } label: {
@@ -37,6 +46,7 @@ struct CityRowView: View {
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
+            
         }
     }
 }
@@ -46,9 +56,8 @@ struct CityRowView: View {
     let sampleCity2 = City(id: 2, name: "Buenos Aires", country: "AR", coord_lon: 100.2093, coord_lat: -38.8688, isFavorite: false)
     
     VStack {
-        
-        CityRowView(city: sampleCity1, onFavoriteToggle: { print("Toggled Fav 1") }, onRowTap: { print("Row 1 tapped") })
-        CityRowView(city: sampleCity2, onFavoriteToggle: { print("Toggled Fav 2") }, onRowTap: { print("Row 2 tapped") })
+        CityRowView(city: sampleCity1, onFavoriteToggle: { print("Toggled Fav 1") }, onShowDetailToggle: {}, onRowTap: { print("Row 1 tapped") })
+        CityRowView(city: sampleCity2, onFavoriteToggle: { print("Toggled Fav 2") }, onShowDetailToggle: {}, onRowTap: { print("Row 2 tapped") })
     }
     .padding()
 }

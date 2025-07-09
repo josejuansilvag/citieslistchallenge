@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct CitiesListChallengeApp: App {
+struct UalaChallengeApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             City.self,

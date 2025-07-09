@@ -5,12 +5,19 @@
 //  Created by Jose Juan Silva Gamino on 07/07/25.
 //
 
-import SwiftData
 import Foundation
+import SwiftData
+
+
 
 @Model
 final class City {
+    #Index([
+        \City.displayName_lowercased,
+        \City.isFavorite
+    ])
     @Attribute(.unique) var id: Int
+    var displayName_lowercased: String
     var name: String
     var country: String
     var coord_lon: Double
@@ -34,6 +41,18 @@ final class City {
         self.coord_lon = coord_lon
         self.coord_lat = coord_lat
         self.isFavorite = isFavorite
+        self.displayName_lowercased = "\(name), \(country)".lowercased()
+    }
+}
+extension City {
+    convenience init(from json: CityJSON) {
+        self.init(
+            id: json._id,
+            name: json.name,
+            country: json.country,
+            coord_lon: json.coord.lon,
+            coord_lat: json.coord.lat
+        )
     }
 }
 

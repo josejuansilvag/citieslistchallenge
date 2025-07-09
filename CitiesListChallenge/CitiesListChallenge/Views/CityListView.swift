@@ -11,14 +11,14 @@ import SwiftData
 
 struct CityListView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: CityListViewModel
+    @State private var viewModel: CityListViewModel
     
     @State private var selectedCityForMap: City? = nil
     @State private var showingCityDetail: City? = nil
     
     init() {
         let dataStore = DataStore(modelContext: ModelContext(try! ModelContainer(for: City.self)))
-        _viewModel = StateObject(wrappedValue: CityListViewModel(dataStore: dataStore))
+        _viewModel = State(wrappedValue: CityListViewModel(dataStore: dataStore))
     }
     
     var body: some View {
@@ -27,7 +27,6 @@ struct CityListView: View {
                 Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
                     .padding(.horizontal)
                 
-                // City list
                 List{
                     ForEach(viewModel.cities) { city in
                         CityRowView(
@@ -52,10 +51,9 @@ struct CityListView: View {
             }
             .searchable(text: $viewModel.searchText)
             .navigationTitle("Cities")
-            
             .task {
-                await viewModel.prepareDataStore()
-            }
+                await viewModel.loadInitialDataIfNeeded()
+             }
             .sheet(item: $showingCityDetail) { city in
                 NavigationView {
                     CityDetailView(city: city)
@@ -67,6 +65,7 @@ struct CityListView: View {
                         }
                 }
             }
+           
         }
     }
 }

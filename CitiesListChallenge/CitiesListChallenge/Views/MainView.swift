@@ -10,6 +10,7 @@ import SwiftUI
 struct MainView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+
     @State private var selectedCityForLandscapeMap: City? = nil
 
     var body: some View {
@@ -20,12 +21,26 @@ struct MainView: View {
         }
     }
 }
+
 struct PortraitView: View {
     var body: some View {
         CityListView()
     }
 }
 
+struct PortraitMainView: View {
+    var body: some View {
+        Text("Portrait Layout - List and Map will be separate")
+    }
+}
+
+struct LandscapeMainView: View {
+    var body: some View {
+        Text("Landscape Layout - List and Map will be combined")
+    }
+}
+
+// Preview for MainView
 #Preview("MainView - Portrait") {
     MainView()
         .modelContainer(for: City.self, inMemory: true)

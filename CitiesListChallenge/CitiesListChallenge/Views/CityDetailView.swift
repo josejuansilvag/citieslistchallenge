@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import MapKit
+import MapKit // For the small map preview
 
 struct CityDetailView: View {
     @State var viewModel: CityDetailViewModel
@@ -15,10 +15,9 @@ struct CityDetailView: View {
     init(city: City) {
         let detailViewModel = CityDetailViewModel(city: city)
         _viewModel = State(initialValue: detailViewModel)
-        
         _mapRegion = State(initialValue: MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon),
-            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1) // Zoom level
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
         ))
     }
 
@@ -28,14 +27,14 @@ struct CityDetailView: View {
                 Text(viewModel.city.displayName)
                     .font(.largeTitle)
                     .fontWeight(.bold)
-              HStack {
+
+                HStack {
                     Image(systemName: "location.fill")
                     Text(viewModel.city.coordinatesString)
                 }
                 .font(.subheadline)
                 .foregroundColor(.gray)
 
-                // Small Map Preview
                 Map(coordinateRegion: $mapRegion, annotationItems: [viewModel.city]) { city in
                     MapMarker(coordinate: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon))
                 }
@@ -45,12 +44,13 @@ struct CityDetailView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
+                
                 HStack {
                     Image(systemName: viewModel.city.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(viewModel.city.isFavorite ? .red : .gray)
                     Text(viewModel.city.isFavorite ? "Favorite" : "Not a Favorite")
                 }
-               Section(header: Text("Raw Data").font(.title2)) {
+                Section(header: Text("Raw Data").font(.title2)) {
                     InfoRow(label: "City ID", value: "\(viewModel.city.id)")
                     InfoRow(label: "Name", value: viewModel.city.name)
                     InfoRow(label: "Country Code", value: viewModel.city.country)

@@ -10,7 +10,9 @@ import MapKit
 
 struct MapView: View {
     let city: City
+
     @State private var region: MKCoordinateRegion
+
     struct AnnotatedItem: Identifiable {
         let id = UUID()
         let name: String
@@ -44,6 +46,7 @@ struct MapView: View {
         }
     }
 }
+
 
 #Preview {
     let previewCity = City(id: 1, name: "Morelai", country: "MX", coord_lon: -100.0, coord_lat: 37.8, isFavorite: false)

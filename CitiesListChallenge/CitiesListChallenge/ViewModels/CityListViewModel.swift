@@ -9,21 +9,34 @@ import Foundation
 import SwiftData
 import Combine
 
-@MainActor
-class CityListViewModel: ObservableObject {
+@Observable @MainActor
+class CityListViewModel{
     private let dataStore: DataStore
     private var cancellables = Set<AnyCancellable>()
     
-    @Published var searchText = ""
-    @Published var showOnlyFavorites = false
-    @Published var cities: [City] = []
-    @Published var totalCount: Int = 0
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var hasMorePages = true
+    var searchText: String = "" {
+        didSet {
+            searchTextSubject.send(searchText)
+        }
+    }
+    
+    var showOnlyFavorites: Bool = false {
+        didSet {
+            showOnlyFavoritesSubject.send(showOnlyFavorites)
+        }
+    }
+    
+    private let searchTextSubject = CurrentValueSubject<String, Never>("")
+    private let showOnlyFavoritesSubject = CurrentValueSubject<Bool, Never>(false)
+    
+    var cities: [City] = []
+    var isLoading = false
+    var errorMessage: String?
+    var hasMorePages = true
     
     private let pageSize = 50
     private var currentPage = 0
+    private var hasInitialized = false
     
     init(dataStore: DataStore) {
         self.dataStore = dataStore
@@ -31,14 +44,13 @@ class CityListViewModel: ObservableObject {
     }
     
     private func setupSearchSubscription() {
-        Publishers.CombineLatest($searchText, $showOnlyFavorites)
+        Publishers.CombineLatest(searchTextSubject, showOnlyFavoritesSubject)
             .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             .removeDuplicates { prev, curr in
                 prev.0 == curr.0 && prev.1 == curr.1
             }
             .sink { [weak self] searchText, showOnlyFavorites in
-                print("Search text: \(searchText), Show only favorites: \(showOnlyFavorites)")
-                self?.resetAndLoadFirstPage()
+                 self?.resetAndLoadFirstPage()
             }
             .store(in: &cancellables)
     }
@@ -49,12 +61,21 @@ class CityListViewModel: ObservableObject {
         loadNextPage()
     }
     
-    func loadNextPage() {
-        guard hasMorePages && !isLoading else { return }
+    func loadInitialDataIfNeeded() async {
+        guard !hasInitialized else { return }
+        hasInitialized = true
         
         isLoading = true
+        await dataStore.prepareDataStore()
+        isLoading = false
+        resetAndLoadFirstPage()
+        
+    }
+    
+    func loadNextPage() {
+        guard hasMorePages && !isLoading else { return }
+        isLoading = true
         errorMessage = nil
-        print("Loading with showOnlyFavorites: \(showOnlyFavorites)")
         let result = dataStore.searchCities(
             prefix: searchText,
             onlyFavorites: showOnlyFavorites,
@@ -63,7 +84,6 @@ class CityListViewModel: ObservableObject {
         )
         
         cities = currentPage == 0 ? result.cities : cities + result.cities
-        totalCount = result.totalMatchingCount
         hasMorePages = result.cities.count == pageSize
         currentPage += 1
         isLoading = false
@@ -74,9 +94,5 @@ class CityListViewModel: ObservableObject {
             await dataStore.toggleFavorite(forCityID: cityID)
             resetAndLoadFirstPage()
         }
-    }
-    
-    func prepareDataStore() async {
-        await dataStore.prepareDataStore()
     }
 }

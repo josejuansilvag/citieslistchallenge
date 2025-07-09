@@ -11,7 +11,7 @@ import SwiftData
 
 struct LandscapeView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: CityListViewModel
+    @State private var viewModel: CityListViewModel
     
     @Binding var selectedCityForLandscapeMap: City?
     @State private var showingCityDetail: City? = nil
@@ -19,7 +19,7 @@ struct LandscapeView: View {
     init(selectedCityForLandscapeMap: Binding<City?>) {
         self._selectedCityForLandscapeMap = selectedCityForLandscapeMap
         let dataStore = DataStore(modelContext: ModelContext(try! ModelContainer(for: City.self)))
-        _viewModel = StateObject(wrappedValue: CityListViewModel(dataStore: dataStore))
+        _viewModel = State(wrappedValue: CityListViewModel(dataStore: dataStore))
     }
     
     var body: some View {
@@ -35,8 +35,6 @@ struct LandscapeView: View {
                     .padding()
                     Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
                         .padding(.horizontal)
-                    
-                    // City list
                     List {
                         ForEach(viewModel.cities) { city in
                             CityRowView(
@@ -61,7 +59,6 @@ struct LandscapeView: View {
                 }
                 .frame(minWidth: 300, maxWidth: 400)
                 
-                // Right side - Map
                 if let selectedCity = selectedCityForLandscapeMap {
                     MapView(city: selectedCity)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -78,7 +75,7 @@ struct LandscapeView: View {
             }
             .navigationTitle("Cities")
             .task {
-                await viewModel.prepareDataStore()
+                await viewModel.loadInitialDataIfNeeded()
             }
             .sheet(item: $showingCityDetail) { city in
                 NavigationView {

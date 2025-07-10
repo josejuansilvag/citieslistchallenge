@@ -58,7 +58,9 @@ class CityListViewModel {
     func resetAndLoadFirstPage() {
         currentPage = 0
         hasMorePages = true
-        loadNextPage()
+        Task {
+            await loadNextPage()
+        }
     }
     
     func loadInitialDataIfNeeded() async {
@@ -68,28 +70,29 @@ class CityListViewModel {
         isLoading = true
         await dataStore.prepareDataStore()
         isLoading = false
-        resetAndLoadFirstPage()
         
+        // Reset y cargar primera página de forma async
+        currentPage = 0
+        hasMorePages = true
+        await loadNextPage()
     }
     
-    func loadNextPage() {
+    func loadNextPage() async {
         guard hasMorePages && !isLoading else { return }
         isLoading = true
         errorMessage = nil
         
-        Task {
-            let result = await dataStore.searchCities(
-                prefix: searchText,
-                onlyFavorites: showOnlyFavorites,
-                page: currentPage,
-                pageSize: pageSize
-            )
-            
-            cities = currentPage == 0 ? result.cities : cities + result.cities
-            hasMorePages = result.cities.count == pageSize
-            currentPage += 1
-            isLoading = false
-        }
+        let result = await dataStore.searchCities(
+            prefix: searchText,
+            onlyFavorites: showOnlyFavorites,
+            page: currentPage,
+            pageSize: pageSize
+        )
+        
+        cities = currentPage == 0 ? result.cities : cities + result.cities
+        hasMorePages = result.cities.count == pageSize
+        currentPage += 1
+        isLoading = false
     }
     
     func toggleFavorite(forCityID cityID: Int) {

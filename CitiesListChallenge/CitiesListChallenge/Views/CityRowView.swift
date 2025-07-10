@@ -51,6 +51,7 @@ struct CityRowView: View {
     }
 }
 
+
 #Preview {
     let sampleCity1 = City(id: 1, name: "Morelia", country: "MX", coord_lon: -74.0060, coord_lat: 40.7128, isFavorite: true)
     let sampleCity2 = City(id: 2, name: "Buenos Aires", country: "AR", coord_lon: 100.2093, coord_lat: -38.8688, isFavorite: false)

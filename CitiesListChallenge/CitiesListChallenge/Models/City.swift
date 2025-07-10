@@ -8,8 +8,6 @@
 import Foundation
 import SwiftData
 
-
-
 @Model
 final class City {
     #Index([
@@ -44,6 +42,7 @@ final class City {
         self.displayName_lowercased = "\(name), \(country)".lowercased()
     }
 }
+
 extension City {
     convenience init(from json: CityJSON) {
         self.init(
@@ -56,14 +55,15 @@ extension City {
     }
 }
 
-struct CityJSON: Decodable {
+// To conform to Decodable for JSON parsing, we use a temporary struct.
+struct CityJSON: Codable, Sendable {
     let country: String
     let name: String
     let _id: Int
     let coord: CoordinateJSON
 }
 
-struct CoordinateJSON: Decodable {
+struct CoordinateJSON: Codable, Sendable {
     let lon: Double
     let lat: Double
 }

@@ -16,6 +16,7 @@ struct CityDetailView: View {
         let detailViewModel = CityDetailViewModel(city: city)
         _viewModel = State(initialValue: detailViewModel)
         
+        // Initialize mapRegion based on the city's coordinates
         _mapRegion = State(initialValue: MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1) // Zoom level
@@ -50,13 +51,14 @@ struct CityDetailView: View {
                         .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
                 
+                // Favorite Status (Read-only display, toggle is on the list view)
                 HStack {
                     Image(systemName: viewModel.city.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(viewModel.city.isFavorite ? .red : .gray)
                     Text(viewModel.city.isFavorite ? "Favorite" : "Not a Favorite")
                 }
 
-                Section(header: Text("Raw Data").font(.title2)) {
+                 Section(header: Text("Raw Data").font(.title2)) {
                     InfoRow(label: "City ID", value: "\(viewModel.city.id)")
                     InfoRow(label: "Name", value: viewModel.city.name)
                     InfoRow(label: "Country Code", value: viewModel.city.country)

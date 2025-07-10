@@ -51,8 +51,6 @@ class CityRepository: CityRepositoryProtocol {
 
         do {
             var queryDescriptor = FetchDescriptor<City>(predicate: finalPredicate, sortBy: defaultSortDescriptor)
-            
-            // Get total count safely
             let totalMatchingCount: Int
             do {
                 totalMatchingCount = try modelContext.fetchCount(queryDescriptor)
@@ -102,17 +100,10 @@ class CityRepository: CityRepositoryProtocol {
         }
     }
     
-    func saveCities(_ cities: [City]) async {
+    func saveCities(_ cities: [CityJSON]) async {
         do {
-            for city in cities {
-                let newCity = City(
-                    id: city.id,
-                    name: city.name,
-                    country: city.country,
-                    coord_lon: city.coord_lon,
-                    coord_lat: city.coord_lat,
-                    isFavorite: city.isFavorite
-                )
+            for cityJSON in cities {
+                let newCity = City(from: cityJSON)
                 modelContext.insert(newCity)
             }
             try modelContext.save()

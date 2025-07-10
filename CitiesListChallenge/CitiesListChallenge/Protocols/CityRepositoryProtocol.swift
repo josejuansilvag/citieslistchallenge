@@ -12,7 +12,7 @@ import SwiftData
 protocol CityRepositoryProtocol {
     func fetchCities(matching prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> SearchResult
     func toggleFavorite(forCityID cityID: Int) async
-    func saveCities(_ cities: [City]) async
+    func saveCities(_ cities: [CityJSON]) async
     func saveCitiesFromJSON(_ cityJSONs: [CityJSON]) async
     func clearAllCities() async
     func getCitiesCount() async -> Int

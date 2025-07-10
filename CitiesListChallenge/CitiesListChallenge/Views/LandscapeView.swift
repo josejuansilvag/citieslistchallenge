@@ -44,7 +44,9 @@ struct LandscapeView: View {
                         if viewModel.hasMorePages {
                             ProgressView()
                                 .onAppear {
-                                    viewModel.loadNextPage()
+                                    Task{
+                                        await  viewModel.loadNextPage()
+                                    }
                                 }
                         }
                     }
@@ -86,7 +88,10 @@ struct LandscapeView_Previews: PreviewProvider {
             @State private var previewSelectedCity: City? = nil
             var body: some View {
                 LandscapeView(
-                    viewModel: CityListViewModel(dataStore: MockDataStore(repository: MockCityRepository(), networkService: MockNetworkService())),
+                    viewModel: CityListViewModel(dataStore: DataStore(
+                        repository: CityRepository(modelContext: ModelContext(try! ModelContainer(for: City.self))),
+                        networkService: NetworkService()
+                    )),
                     selectedCityForLandscapeMap: $previewSelectedCity
                 )
                     .modelContainer(for: City.self, inMemory: true)

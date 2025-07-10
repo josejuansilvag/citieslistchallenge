@@ -20,7 +20,6 @@ struct CityListView: View {
             VStack {
                 Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
                     .padding(.horizontal)
-                
                 List{
                     ForEach(viewModel.cities) { city in
                         NavigationLink(destination: CityDetailView(city: city)) {
@@ -33,7 +32,6 @@ struct CityListView: View {
                                 },
                                 onRowTap: {
                                     selectedCityForMap = city
-                                    //showingCityDetail = city
                                 }
                             )
                         }
@@ -41,7 +39,9 @@ struct CityListView: View {
                     if viewModel.hasMorePages {
                         ProgressView()
                             .onAppear {
-                                viewModel.loadNextPage()
+                                Task {
+                                    await viewModel.loadNextPage()
+                                }
                             }
                     }
                 }
@@ -75,7 +75,10 @@ struct CityListView: View {
 struct CityListView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            CityListView(viewModel: CityListViewModel(dataStore: MockDataStore(repository: MockCityRepository(), networkService: MockNetworkService())))
+            CityListView(viewModel: CityListViewModel(dataStore: DataStore(
+                repository: CityRepository(modelContext: ModelContext(try! ModelContainer(for: City.self))),
+                networkService: NetworkService()
+            )))
                 .modelContainer(for: City.self, inMemory: true)
         }
     }

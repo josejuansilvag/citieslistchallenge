@@ -27,7 +27,6 @@ class NetworkServiceTests: XCTestCase {
     // MARK: - Network Service Tests
     
     func testDownloadCityDataSuccess() async throws {
-        // Arrange
         let mockCities = [
             CityJSON(country: "AR", name: "Buenos Aires", _id: 1, coord: CoordinateJSON(lon: -58.3816, lat: -34.6037)),
             CityJSON(country: "BR", name: "Rio de Janeiro", _id: 2, coord: CoordinateJSON(lon: -43.1729, lat: -22.9068))
@@ -35,11 +34,7 @@ class NetworkServiceTests: XCTestCase {
         
         let jsonData = try JSONEncoder().encode(mockCities)
         mockNetworkClient.mockData = jsonData
-        
-        // Act
         let result = try await networkService.downloadCityData()
-        
-        // Assert
         XCTAssertEqual(result.count, 2)
         XCTAssertEqual(result[0].name, "Buenos Aires")
         XCTAssertEqual(result[0].country, "AR")

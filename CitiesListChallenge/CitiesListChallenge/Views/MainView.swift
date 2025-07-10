@@ -16,6 +16,11 @@ struct MainView: View {
     @State private var selectedCityForLandscapeMap: City? = nil
     @State private var cityListViewModel: CityListViewModel?
     
+    // Detectar si debemos usar mock data
+    private var useMockData: Bool {
+        ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
+    }
+    
     var body: some View {
         Group {
             if let viewModel = cityListViewModel {
@@ -41,8 +46,17 @@ struct MainView: View {
     
     @MainActor
     private func createDIContainerAndViewModel() async {
-        let diContainer = DIContainer(modelContainer: modelContext.container)
+        print("MainView: useMockData = \(useMockData)")
+        let diContainer = DIContainer(modelContainer: modelContext.container, useMockData: useMockData)
         cityListViewModel = diContainer.makeCityListViewModel()
+        print("MainView: ViewModel creado con DIContainer")
+        
+        // Preparar el data store (solo para datos reales, no para mocks)
+        if !useMockData {
+            print("MainView: Preparando data store para datos reales")
+            let dataStore = diContainer.makeDataStore()
+            await dataStore.prepareDataStore()
+        }
     }
 }
 

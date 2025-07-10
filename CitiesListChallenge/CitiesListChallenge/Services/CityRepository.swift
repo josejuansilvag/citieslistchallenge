@@ -51,6 +51,7 @@ class CityRepository: CityRepositoryProtocol {
 
         do {
             var queryDescriptor = FetchDescriptor<City>(predicate: finalPredicate, sortBy: defaultSortDescriptor)
+            
             let totalMatchingCount: Int
             do {
                 totalMatchingCount = try modelContext.fetchCount(queryDescriptor)
@@ -89,32 +90,38 @@ class CityRepository: CityRepositoryProtocol {
     }
     
     func saveCitiesFromJSON(_ cityJSONs: [CityJSON]) async {
+        print("CityRepository: Guardando \(cityJSONs.count) ciudades")
         do {
             for cityJSON in cityJSONs {
                 let newCity = City(from: cityJSON)
                 modelContext.insert(newCity)
             }
             try modelContext.save()
+            print("CityRepository: Ciudades guardadas exitosamente")
         } catch {
             print("Error saving cities from JSON: \(error)")
         }
     }
     
     func saveCities(_ cities: [CityJSON]) async {
+        print("CityRepository: Guardando \(cities.count) ciudades")
         do {
             for cityJSON in cities {
                 let newCity = City(from: cityJSON)
                 modelContext.insert(newCity)
             }
             try modelContext.save()
+            print("CityRepository: Ciudades guardadas exitosamente")
         } catch {
             print("Error saving cities: \(error)")
         }
     }
     
     func clearAllCities() async {
+        print("CityRepository: Limpiando todas las ciudades")
         do {
             try modelContext.delete(model: City.self)
+            print("CityRepository: Ciudades limpiadas exitosamente")
         } catch {
             print("Error clearing cities: \(error)")
         }
@@ -123,7 +130,9 @@ class CityRepository: CityRepositoryProtocol {
     func getCitiesCount() async -> Int {
         do {
             let fetchDescriptor = FetchDescriptor<City>()
-            return try modelContext.fetchCount(fetchDescriptor)
+            let count = try modelContext.fetchCount(fetchDescriptor)
+            print("CityRepository: getCitiesCount retorna: \(count)")
+            return count
         } catch {
             print("Error fetching city count: \(error)")
             return 0

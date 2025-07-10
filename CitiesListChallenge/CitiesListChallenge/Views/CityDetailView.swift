@@ -51,7 +51,6 @@ struct CityDetailView: View {
                         .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
                 
-                // Favorite Status (Read-only display, toggle is on the list view)
                 HStack {
                     Image(systemName: viewModel.city.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(viewModel.city.isFavorite ? .red : .gray)

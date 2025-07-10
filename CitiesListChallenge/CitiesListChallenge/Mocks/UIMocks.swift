@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-// MARK: - Mock Dependencies for UI Testing
+// MARK: - Mock Dependencies for Testing and UI Testing
 
 class MockNetworkClient: NetworkClientProtocol {
     var shouldFail = false
@@ -18,6 +18,7 @@ class MockNetworkClient: NetworkClientProtocol {
         if shouldFail {
             throw NetworkError.requestFailed(NSError(domain: "Mock", code: 500, userInfo: nil))
         }
+        
         let decoder = JSONDecoder()
         return try decoder.decode(T.self, from: mockData)
     }
@@ -34,8 +35,14 @@ class MockNetworkService: NetworkServiceProtocol {
     private let networkClient: NetworkClientProtocol
     
     var shouldFail: Bool {
-        get { (networkClient as? MockNetworkClient)?.shouldFail ?? false }
-        set { if var client = networkClient as? MockNetworkClient { client.shouldFail = newValue } }
+        get {
+            (networkClient as? MockNetworkClient)?.shouldFail ?? false
+        }
+        set {
+            if var client = networkClient as? MockNetworkClient {
+                client.shouldFail = newValue
+            }
+        }
     }
     
     init(networkClient: NetworkClientProtocol = MockNetworkClient()) {
@@ -51,18 +58,26 @@ class MockCityRepository: CityRepositoryProtocol {
     var mockCities: [City] = []
     var shouldFail = false
     
+    init() {
+        print("MockCityRepository: Constructor llamado")
+    }
+    
     func fetchCities(matching prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> SearchResult {
+        print("MockCityRepository: fetchCities - prefix: '\(prefix)', onlyFavorites: \(onlyFavorites), page: \(page)")
         if shouldFail {
             return SearchResult(cities: [], totalMatchingCount: 0)
         }
+        
         let filteredCities = mockCities.filter { city in
             let matchesPrefix = prefix.isEmpty || city.name.lowercased().hasPrefix(prefix.lowercased())
             let matchesFavorites = !onlyFavorites || city.isFavorite
             return matchesPrefix && matchesFavorites
         }
+        
         let startIndex = page * pageSize
         let endIndex = min(startIndex + pageSize, filteredCities.count)
         let paginatedCities = Array(filteredCities[startIndex..<endIndex])
+        print("MockCityRepository: Retornando \(paginatedCities.count) ciudades de \(filteredCities.count) total")
         return SearchResult(cities: paginatedCities, totalMatchingCount: filteredCities.count)
     }
     
@@ -97,16 +112,22 @@ class MockDataStore: DataStoreProtocol {
     var isDataLoaded = false
     
     init(repository: CityRepositoryProtocol, networkService: NetworkServiceProtocol) {
+        print("MockDataStore: Constructor llamado")
         self.repository = repository
         self.networkService = networkService
     }
     
     func prepareDataStore() async {
-        if isDataLoaded { return }
+        print("MockDataStore: prepareDataStore llamado")
+        if isDataLoaded {
+            print("MockDataStore: Ya está cargado, retornando")
+            return
+        }
         do {
             let cities = try await networkService.downloadCityData()
             await repository.saveCities(cities)
             isDataLoaded = true
+            print("MockDataStore: Datos preparados")
         } catch {
             print("Mock DataStore error: \(error)")
         }

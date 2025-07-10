@@ -17,13 +17,16 @@ class SearchLogicTests: XCTestCase {
     @MainActor
     override func setUp() async throws {
         try await super.setUp()
+        
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         modelContainer = try ModelContainer(for: City.self, configurations: config)
+        
         repository = CityRepository(modelContext: modelContainer.mainContext)
         dataStore = DataStore(
             repository: repository,
             networkService: MockNetworkService()
         )
+        
         await dataStore.clearAllData()
         try await populateTestData()
     }
@@ -111,7 +114,6 @@ class SearchLogicTests: XCTestCase {
     
     @MainActor
     func testRepositorySearchWithFavorites() async {
-        // Make Alabama favorite
         await repository.toggleFavorite(forCityID: 1)
         
         let result = await repository.fetchCities(matching: "A", onlyFavorites: true, page: 0, pageSize: 10)
@@ -151,3 +153,4 @@ class SearchLogicTests: XCTestCase {
         XCTAssertEqual(afterClearCount, 0, "Should have 0 cities after clear")
     }
 }
+

@@ -55,7 +55,6 @@ extension City {
     }
 }
 
-// To conform to Decodable for JSON parsing, we use a temporary struct.
 struct CityJSON: Codable, Sendable {
     let country: String
     let name: String

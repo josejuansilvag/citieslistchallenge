@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 
 struct CityListView: View {
-    @State var viewModel: CityListViewModel
+    @Bindable var viewModel: CityListViewModel
     
     @State private var selectedCityForMap: City? = nil
     @State private var showingCityDetail: City? = nil
@@ -19,7 +19,10 @@ struct CityListView: View {
         NavigationStack {
             VStack {
                 Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
+                    .accessibilityIdentifier("favoritesToggle")
                     .padding(.horizontal)
+                
+                // City list
                 List{
                     ForEach(viewModel.cities) { city in
                         NavigationLink(destination: CityDetailView(city: city)) {
@@ -32,6 +35,7 @@ struct CityListView: View {
                                 },
                                 onRowTap: {
                                     selectedCityForMap = city
+                                    //showingCityDetail = city
                                 }
                             )
                         }

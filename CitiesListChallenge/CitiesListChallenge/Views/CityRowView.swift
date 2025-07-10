@@ -46,11 +46,11 @@ struct CityRowView: View {
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(city.isFavorite ? "star.fill" : "star")
             
         }
     }
 }
-
 
 #Preview {
     let sampleCity1 = City(id: 1, name: "Morelia", country: "MX", coord_lon: -74.0060, coord_lat: 40.7128, isFavorite: true)

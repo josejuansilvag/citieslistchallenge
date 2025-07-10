@@ -47,7 +47,6 @@ final class CityListViewModelTests: XCTestCase {
     
     @MainActor
     func testInitialLoadWithMockData() async {
-        // Act
         await viewModel.loadInitialDataIfNeeded()
         XCTAssertEqual(viewModel.cities.count, 5, "Should load all 5 test cities")
         XCTAssertFalse(viewModel.isLoading, "Should not be loading after completion")
@@ -60,7 +59,7 @@ final class CityListViewModelTests: XCTestCase {
             CityJSON(country: "BR", name: "Rio de Janeiro", _id: 2, coord: CoordinateJSON(lon: -43.1729, lat: -22.9068))
         ]
         await mockDataStore.saveCitiesFromJSON(cityJSONs)
-        await viewModel.loadInitialDataIfNeeded()
+       await viewModel.loadInitialDataIfNeeded()
         XCTAssertEqual(viewModel.cities.count, 7) //5 from setup + 2 new
         XCTAssertEqual(viewModel.cities.last?.name, "Rio de Janeiro")
     }
@@ -71,8 +70,6 @@ final class CityListViewModelTests: XCTestCase {
     func testSearchFiltersCities() async {
         await viewModel.loadInitialDataIfNeeded()
         viewModel.searchText = "London"
-        
-        // Wait for debounce
         try? await Task.sleep(nanoseconds: 400_000_000) // 400ms
         XCTAssertEqual(viewModel.cities.count, 1, "Should find only London")
         XCTAssertEqual(viewModel.cities.first?.name, "London")
@@ -144,7 +141,7 @@ final class CityListViewModelTests: XCTestCase {
     @MainActor
     func testPagination() async {
         let moreCities = (6...60).map { i in
-            City(id: i, name: "City\(i)", country: "CO", coord_lon: Double(i), coord_lat: Double(i))
+            City(id: i, name: "City\(i)", country: "MX", coord_lon: Double(i), coord_lat: Double(i))
         }
         mockRepository.mockCities.append(contentsOf: moreCities)
         
@@ -152,14 +149,13 @@ final class CityListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.cities.count, 50, "Should load first page of 50 items")
         XCTAssertTrue(viewModel.hasMorePages, "Should have more pages")
         await viewModel.loadNextPage()
-        
         XCTAssertEqual(viewModel.cities.count, 60, "Should have loaded second page")
     }
     
     @MainActor
     func testPaginationWithSearch() async {
         let moreCities = (6...60).map { i in
-            City(id: i, name: "City\(i)", country: "CO", coord_lon: Double(i), coord_lat: Double(i))
+            City(id: i, name: "City\(i)", country: "MX", coord_lon: Double(i), coord_lat: Double(i))
         }
         mockRepository.mockCities.append(contentsOf: moreCities)
         

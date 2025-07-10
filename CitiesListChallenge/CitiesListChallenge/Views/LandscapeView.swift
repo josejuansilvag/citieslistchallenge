@@ -22,6 +22,7 @@ struct LandscapeView: View {
                 VStack {
                     // Favorites toggle
                     Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
+                        .accessibilityIdentifier("favoritesToggle")
                         .padding(.horizontal)
                     
                     // City list

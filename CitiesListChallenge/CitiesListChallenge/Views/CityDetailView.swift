@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import MapKit
+import MapKit // For the small map preview
 
 struct CityDetailView: View {
     @State var viewModel: CityDetailViewModel
@@ -16,8 +16,7 @@ struct CityDetailView: View {
         let detailViewModel = CityDetailViewModel(city: city)
         _viewModel = State(initialValue: detailViewModel)
         
-        // Initialize mapRegion based on the city's coordinates
-        _mapRegion = State(initialValue: MKCoordinateRegion(
+         _mapRegion = State(initialValue: MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1) // Zoom level
         ))
@@ -26,12 +25,10 @@ struct CityDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // City Name and Country
                 Text(viewModel.city.displayName)
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                // Coordinates
                 HStack {
                     Image(systemName: "location.fill")
                     Text(viewModel.city.coordinatesString)
@@ -39,7 +36,6 @@ struct CityDetailView: View {
                 .font(.subheadline)
                 .foregroundColor(.gray)
 
-                // Small Map Preview
                 Map(initialPosition: .region(mapRegion)) {
                     Marker(viewModel.city.name, coordinate: CLLocationCoordinate2D(latitude: viewModel.city.coord_lat, longitude: viewModel.city.coord_lon))
                 }
@@ -51,13 +47,14 @@ struct CityDetailView: View {
                         .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
                 
+                // Favorite Status (Read-only display, toggle is on the list view)
                 HStack {
                     Image(systemName: viewModel.city.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(viewModel.city.isFavorite ? .red : .gray)
                     Text(viewModel.city.isFavorite ? "Favorite" : "Not a Favorite")
                 }
 
-                 Section(header: Text("Raw Data").font(.title2)) {
+                Section(header: Text("Raw Data").font(.title2)) {
                     InfoRow(label: "City ID", value: "\(viewModel.city.id)")
                     InfoRow(label: "Name", value: viewModel.city.name)
                     InfoRow(label: "Country Code", value: viewModel.city.country)
@@ -86,6 +83,7 @@ struct InfoRow: View {
         .padding(.vertical, 2)
     }
 }
+
 
 #Preview {
     let previewCity = City(id: 5435, name: "Morelia", country: "MX", coord_lon: 101.5, coord_lat: 19.7, isFavorite: true)

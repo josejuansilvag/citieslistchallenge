@@ -13,44 +13,61 @@ struct CityRowView: View {
     let onShowDetailToggle: () -> Void
     let onRowTap: () -> Void
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    
     var body: some View {
-        HStack {
-            HStack{
-                VStack(alignment: .leading) {
-                    Text(city.name)
-                        .font(.headline)
-                    Text(city.country)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                Spacer()
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: "building.2.crop.circle")
+                .resizable()
+                .frame(width: 32, height: 32)
+                .foregroundColor(AppTheme.secondary)
+                .background(
+                    Circle()
+                        .fill(AppTheme.background)
+                        .frame(width: 40, height: 40)
+                )
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(city.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(AppTheme.text)
+                Text(city.country)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                onRowTap()
-            }
-            Button {
-                onShowDetailToggle()
-            } label: {
+            Spacer()
+            Button(action: onShowDetailToggle) {
                 Image(systemName: "info.circle")
-                    .foregroundColor(.primary)
+                    .foregroundColor(AppTheme.secondary)
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
-            Button {
-                print("favourite button tapped")
+            Button(action: {
                 onFavoriteToggle()
-            } label: {
+            }) {
                 Image(systemName: city.isFavorite ? "star.fill" : "star")
-                    .foregroundColor(city.isFavorite ? .yellow : .gray)
+                    .foregroundColor(city.isFavorite ? AppTheme.accent : .gray)
+                    .imageScale(.large)
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(city.isFavorite ? "star.fill" : "star")
-            
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(AppTheme.cellBackground)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onRowTap()
         }
     }
 }
+
 
 #Preview {
     let sampleCity1 = City(id: 1, name: "Morelia", country: "MX", coord_lon: -74.0060, coord_lat: 40.7128, isFavorite: true)

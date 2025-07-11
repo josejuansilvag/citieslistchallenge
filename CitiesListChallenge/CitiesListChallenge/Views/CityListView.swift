@@ -14,10 +14,12 @@ struct CityListView: View {
     
     @State private var selectedCityForMap: City? = nil
     @State private var showingCityDetail: City? = nil
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     var body: some View {
         NavigationStack {
             VStack {
+                // Favorites toggle
                 Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
                     .accessibilityIdentifier("favoritesToggle")
                     .padding(.horizontal)
@@ -35,7 +37,6 @@ struct CityListView: View {
                                 },
                                 onRowTap: {
                                     selectedCityForMap = city
-                                    //showingCityDetail = city
                                 }
                             )
                         }
@@ -50,7 +51,7 @@ struct CityListView: View {
                     }
                 }
                 .listStyle(.plain)
-                
+                .padding(.horizontal, horizontalSizeClass == .regular ? -20 : 0)
             }
             .searchable(text: $viewModel.searchText)
             .navigationTitle("Cities")
@@ -71,7 +72,6 @@ struct CityListView: View {
                         }
                 }
             }
-           
         }
     }
 }

@@ -17,15 +17,12 @@ struct LandscapeView: View {
     
     var body: some View {
         NavigationView {
-            HStack {
-                // Left side: City list
-                VStack {
-                    // Favorites toggle
+            HStack(spacing: 0) {
+                VStack(alignment: .leading) {
                     Toggle("Show Favorites Only", isOn: $viewModel.showOnlyFavorites)
                         .accessibilityIdentifier("favoritesToggle")
                         .padding(.horizontal)
-                    
-                    // City list
+                        .padding(.top, 8)
                     List {
                         ForEach(viewModel.cities) { city in
                             CityRowView(
@@ -40,30 +37,38 @@ struct LandscapeView: View {
                                     selectedCityForLandscapeMap = city
                                 }
                             )
+                            .padding(.vertical, 12)
+                            .padding(.trailing, 12)
+                            .listRowInsets(EdgeInsets())
+                            .contentShape(Rectangle())
                         }
                         
                         if viewModel.hasMorePages {
                             ProgressView()
                                 .onAppear {
-                                    Task{
-                                        await  viewModel.loadNextPage()
+                                    Task {
+                                        await viewModel.loadNextPage()
                                     }
                                 }
                         }
                     }
                     .listStyle(.plain)
+                    .padding(.leading, -40)
                 }
-                .frame(width: 300)
+                .frame(width: 320)
                 .searchable(text: $viewModel.searchText)
                 .navigationTitle("Cities")
-                
-                // Right side: Map
-                if let selectedCity = selectedCityForLandscapeMap {
-                    MapView(city: selectedCity)
-                } else {
-                    Text("Select a city to view on map")
-                        .foregroundColor(.gray)
+                Group {
+                    if let selectedCity = selectedCityForLandscapeMap {
+                        MapView(city: selectedCity)
+                            .cornerRadius(12)
+                    } else {
+                        Text("Select a city to view on map")
+                            .foregroundColor(.gray)
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(8)
             }
             .task {
                 await viewModel.loadInitialDataIfNeeded()
@@ -95,7 +100,7 @@ struct LandscapeView_Previews: PreviewProvider {
                     )),
                     selectedCityForLandscapeMap: $previewSelectedCity
                 )
-                    .modelContainer(for: City.self, inMemory: true)
+                .modelContainer(for: City.self, inMemory: true)
             }
         }
         return PreviewWrapper()

@@ -71,7 +71,6 @@ class CityListViewModel {
         await dataStore.prepareDataStore()
         isLoading = false
         
-        // Reset y cargar primera página de forma async
         currentPage = 0
         hasMorePages = true
         await loadNextPage()

@@ -21,13 +21,10 @@ class DIContainer {
     private var dataStore: DataStoreProtocol
     
     init(modelContainer: ModelContainer, useMockData: Bool = false) {
-        print("DIContainer: useMockData = \(useMockData)")
         self.modelContainer = modelContainer
         self.modelContext = modelContainer.mainContext
         
         if useMockData {
-            print("DIContainer: Usando MOCKS")
-            // Mocks con datos hardcodeados
             let mockRepository = MockCityRepository()
             mockRepository.mockCities = [
                 City(id: 1, name: "London", country: "GB", coord_lon: 0, coord_lat: 0),
@@ -41,7 +38,6 @@ class DIContainer {
             self.cityRepository = mockRepository
             self.dataStore = MockDataStore(repository: self.cityRepository, networkService: self.networkService)
         } else {
-            print("DIContainer: Usando DATOS REALES")
             self.networkClient = NetworkClient()
             self.networkService = NetworkService(networkClient: self.networkClient)
             self.cityRepository = CityRepository(modelContext: modelContext)

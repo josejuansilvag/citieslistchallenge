@@ -10,8 +10,7 @@ import SwiftData
 
 @main
 struct UalaChallengeApp: App {
-    
-      var sharedModelContainer: ModelContainer = {
+    var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             City.self,
         ])
@@ -42,23 +41,18 @@ struct UalaChallengeApp: App {
     
     private func resetDataForUITesting() {
         guard useMockData else {
-            print("No en modo UI testing, saltando reset de datos")
             return
         }
         
         Task {
             do {
                 let context = sharedModelContainer.mainContext
-                
-                // Delete all existing cities
                 let fetchDescriptor = FetchDescriptor<City>()
                 let existingCities = try context.fetch(fetchDescriptor)
                 for city in existingCities {
                     context.delete(city)
                 }
                 try context.save()
-                
-                // Re-initialize with fresh data (mock o real según argumento)
                 let diContainer = DIContainer(modelContainer: sharedModelContainer, useMockData: useMockData)
                 let dataStore = diContainer.makeDataStore()
                 await dataStore.prepareDataStore()

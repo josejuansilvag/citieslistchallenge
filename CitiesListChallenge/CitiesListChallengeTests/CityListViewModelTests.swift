@@ -47,120 +47,168 @@ final class CityListViewModelTests: XCTestCase {
     
     @MainActor
     func testInitialLoadWithMockData() async {
+        // Given: A ViewModel with 5 mock cities in the repository
         await viewModel.loadInitialDataIfNeeded()
+
+        // Then: It should have loaded all 5 cities and finished loading
         XCTAssertEqual(viewModel.cities.count, 5, "Should load all 5 test cities")
         XCTAssertFalse(viewModel.isLoading, "Should not be loading after completion")
     }
-    
+
     @MainActor
     func testInitialLoadWithJSONData() async {
+        // Given: Two new cities added via JSON
         let cityJSONs = [
             CityJSON(country: "AR", name: "Buenos Aires", _id: 1, coord: CoordinateJSON(lon: -58.3816, lat: -34.6037)),
             CityJSON(country: "BR", name: "Rio de Janeiro", _id: 2, coord: CoordinateJSON(lon: -43.1729, lat: -22.9068))
         ]
         await mockDataStore.saveCitiesFromJSON(cityJSONs)
-       await viewModel.loadInitialDataIfNeeded()
-        XCTAssertEqual(viewModel.cities.count, 7) //5 from setup + 2 new
+
+        // When: Initial data is loaded
+        await viewModel.loadInitialDataIfNeeded()
+
+        // Then: There should be 7 cities in total, with "Rio de Janeiro" as the last one
+        XCTAssertEqual(viewModel.cities.count, 7)
         XCTAssertEqual(viewModel.cities.last?.name, "Rio de Janeiro")
     }
 
-    // MARK: - Search Functionality Tests
-    
     @MainActor
     func testSearchFiltersCities() async {
+        // Given: Initial data with all mock cities is loaded
         await viewModel.loadInitialDataIfNeeded()
+
+        // When: Search text is set to "London"
         viewModel.searchText = "London"
-        try? await Task.sleep(nanoseconds: 400_000_000) // 400ms
-        XCTAssertEqual(viewModel.cities.count, 1, "Should find only London")
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
+        // Then: Only one city should match, named "London"
+        XCTAssertEqual(viewModel.cities.count, 1)
         XCTAssertEqual(viewModel.cities.first?.name, "London")
     }
-    
+
     @MainActor
     func testSearchCaseInsensitive() async {
+        // Given: Initial data is loaded
         await viewModel.loadInitialDataIfNeeded()
-        viewModel.searchText = "london" // lowercase
+
+        // When: Search text is set to "london" (lowercase)
+        viewModel.searchText = "london"
         try? await Task.sleep(nanoseconds: 400_000_000)
-        XCTAssertEqual(viewModel.cities.count, 1, "Should find London with lowercase search")
+
+        // Then: It should still find the city "London"
+        XCTAssertEqual(viewModel.cities.count, 1)
         XCTAssertEqual(viewModel.cities.first?.name, "London")
     }
-    
+
     @MainActor
     func testSearchEmptyStringShowsAll() async {
+        // Given: A filtered search was made
         await viewModel.loadInitialDataIfNeeded()
         viewModel.searchText = "London"
         try? await Task.sleep(nanoseconds: 400_000_000)
         XCTAssertEqual(viewModel.cities.count, 1)
+
+        // When: Search text is cleared
         viewModel.searchText = ""
         try? await Task.sleep(nanoseconds: 400_000_000)
-        XCTAssertEqual(viewModel.cities.count, 5, "Should show all cities when search is empty")
+
+        // Then: All original 5 cities should be shown
+        XCTAssertEqual(viewModel.cities.count, 5)
     }
 
-    // MARK: - Favorites Tests
-    
     @MainActor
     func testFavoritesFilter() async {
+        // Given: Initial data with 2 favorite cities
         await viewModel.loadInitialDataIfNeeded()
+
+        // When: Favorites filter is enabled
         viewModel.showOnlyFavorites = true
         try? await Task.sleep(nanoseconds: 400_000_000)
-        XCTAssertEqual(viewModel.cities.count, 2, "Should show only 2 favorite cities")
+
+        // Then: Only 2 favorite cities should be visible
+        XCTAssertEqual(viewModel.cities.count, 2)
         XCTAssertTrue(viewModel.cities.allSatisfy { $0.isFavorite })
     }
-    
+
     @MainActor
     func testToggleFavorite() async {
+        // Given: London (ID 1) is not a favorite
         await viewModel.loadInitialDataIfNeeded()
-        viewModel.toggleFavorite(forCityID: 1) // London
+
+        // When: Toggle favorite status for London
+        viewModel.toggleFavorite(forCityID: 1)
         try? await Task.sleep(nanoseconds: 400_000_000)
+
+        // Then: London should now be marked as favorite
         XCTAssertTrue(mockRepository.mockCities.first { $0.id == 1 }?.isFavorite ?? false)
     }
-    
+
     @MainActor
     func testSearchWithFavoritesFilter() async {
+        // Given: Only favorites are being shown
         await viewModel.loadInitialDataIfNeeded()
         viewModel.showOnlyFavorites = true
         try? await Task.sleep(nanoseconds: 400_000_000)
-        XCTAssertEqual(viewModel.cities.count, 2) // Only favorites
+        XCTAssertEqual(viewModel.cities.count, 2)
+
+        // When: Search for "New York"
         viewModel.searchText = "New York"
         try? await Task.sleep(nanoseconds: 400_000_000)
-        XCTAssertEqual(viewModel.cities.count, 1, "Should find only New York in favorites")
+
+        // Then: Only "New York" should match and it should be a favorite
+        XCTAssertEqual(viewModel.cities.count, 1)
         XCTAssertEqual(viewModel.cities.first?.name, "New York")
         XCTAssertTrue(viewModel.cities.first?.isFavorite ?? false)
     }
 
-    // MARK: - Network Error Handling Tests
-    
     @MainActor
     func testNetworkFailureHandling() async {
+        // Given: Network service is configured to fail
         mockNetworkService.shouldFail = true
+
+        // When: Initial data is loaded
         await viewModel.loadInitialDataIfNeeded()
-        XCTAssertFalse(viewModel.isLoading, "Should not be loading after failure")
+
+        // Then: ViewModel should not be in a loading state anymore
+        XCTAssertFalse(viewModel.isLoading)
     }
 
-    // MARK: - Pagination Tests
-    
     @MainActor
     func testPagination() async {
+        // Given: Add 55 more cities to the repository (total 60)
         let moreCities = (6...60).map { i in
             City(id: i, name: "City\(i)", country: "MX", coord_lon: Double(i), coord_lat: Double(i))
         }
         mockRepository.mockCities.append(contentsOf: moreCities)
-        
+
+        // When: Load initial data (first page)
         await viewModel.loadInitialDataIfNeeded()
-        XCTAssertEqual(viewModel.cities.count, 50, "Should load first page of 50 items")
-        XCTAssertTrue(viewModel.hasMorePages, "Should have more pages")
+
+        // Then: Only first 50 cities should be loaded initially
+        XCTAssertEqual(viewModel.cities.count, 50)
+        XCTAssertTrue(viewModel.hasMorePages)
+
+        // When: Load next page
         await viewModel.loadNextPage()
-        XCTAssertEqual(viewModel.cities.count, 60, "Should have loaded second page")
+
+        // Then: Remaining 10 cities should now be visible (total 60)
+        XCTAssertEqual(viewModel.cities.count, 60)
     }
-    
+
     @MainActor
     func testPaginationWithSearch() async {
+        // Given: Add many cities and load initial data
         let moreCities = (6...60).map { i in
             City(id: i, name: "City\(i)", country: "MX", coord_lon: Double(i), coord_lat: Double(i))
         }
         mockRepository.mockCities.append(contentsOf: moreCities)
-        
         await viewModel.loadInitialDataIfNeeded()
+
+        // When: Search for cities that match "City"
         viewModel.searchText = "City"
-        XCTAssertTrue(viewModel.hasMorePages, "Should have more pages when searching")
+
+        // Then: ViewModel should indicate more pages available
+        XCTAssertTrue(viewModel.hasMorePages)
     }
+
 }

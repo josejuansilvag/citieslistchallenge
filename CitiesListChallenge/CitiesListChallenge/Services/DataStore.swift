@@ -26,13 +26,11 @@ class DataStore: DataStoreProtocol {
     }
     
     init(repository: CityRepositoryProtocol, networkService: NetworkServiceProtocol) {
-        print("DataStore REAL: Constructor llamado")
         self.repository = repository
         self.networkService = networkService
         
         if ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting") {
             Task { @MainActor in
-                print("DataStore REAL: Detectado argumento --useMockDataForUITesting, limpiando datos")
                 await self.clearAllData()
             }
         }
@@ -42,36 +40,20 @@ class DataStore: DataStoreProtocol {
     
     @MainActor
     func prepareDataStore() async {
-        print("DataStore: prepareDataStore llamado")
-        
-        // Verificar si ya hay ciudades en la base de datos
         let count = await repository.getCitiesCount()
-        print("DataStore: Count de ciudades en BD: \(count)")
-        
         if count > 0 {
-            print("DataStore: Ya existen \(count) ciudades, no es necesario descargar")
             return
         }
-        
-        // Solo descargar si no hay ciudades
-        print("DataStore: Descargando ciudades...")
         await downloadAndStoreCities()
-        
-        // Verificar count después de descargar
-        let countAfterDownload = await repository.getCitiesCount()
-        print("DataStore: Count después de descargar: \(countAfterDownload)")
     }
     
     @MainActor
     private func downloadAndStoreCities() async {
-        print("🔄 Starting download and store cities (Serial Chunks Strategy)...")
         do {
             startTime = Date().timeIntervalSince1970
             let cityJSONs = try await networkService.downloadCityData()
             printTimeElapsed(message: "Downloaded city data Total cities to process: \(cityJSONs.count)")
-            
             await repository.clearAllCities()
-            
             startTime = Date().timeIntervalSince1970
             let chunks = cityJSONs.chunked(into: chunkSize)
             for chunk in chunks {

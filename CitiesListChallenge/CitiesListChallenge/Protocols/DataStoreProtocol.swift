@@ -21,3 +21,4 @@ struct SearchResult {
     let cities: [City]
     let totalMatchingCount: Int
 }
+

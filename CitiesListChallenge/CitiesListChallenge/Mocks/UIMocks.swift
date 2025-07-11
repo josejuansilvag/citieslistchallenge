@@ -39,7 +39,7 @@ class MockNetworkService: NetworkServiceProtocol {
             (networkClient as? MockNetworkClient)?.shouldFail ?? false
         }
         set {
-            if var client = networkClient as? MockNetworkClient {
+            if let client = networkClient as? MockNetworkClient {
                 client.shouldFail = newValue
             }
         }
@@ -63,7 +63,6 @@ class MockCityRepository: CityRepositoryProtocol {
     }
     
     func fetchCities(matching prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> SearchResult {
-        print("MockCityRepository: fetchCities - prefix: '\(prefix)', onlyFavorites: \(onlyFavorites), page: \(page)")
         if shouldFail {
             return SearchResult(cities: [], totalMatchingCount: 0)
         }
@@ -77,7 +76,6 @@ class MockCityRepository: CityRepositoryProtocol {
         let startIndex = page * pageSize
         let endIndex = min(startIndex + pageSize, filteredCities.count)
         let paginatedCities = Array(filteredCities[startIndex..<endIndex])
-        print("MockCityRepository: Retornando \(paginatedCities.count) ciudades de \(filteredCities.count) total")
         return SearchResult(cities: paginatedCities, totalMatchingCount: filteredCities.count)
     }
     

@@ -16,7 +16,6 @@ struct MainView: View {
     @State private var selectedCityForLandscapeMap: City? = nil
     @State private var cityListViewModel: CityListViewModel?
     
-    // Detectar si debemos usar mock data
     private var useMockData: Bool {
         ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
     }
@@ -51,7 +50,6 @@ struct MainView: View {
         cityListViewModel = diContainer.makeCityListViewModel()
         print("MainView: ViewModel creado con DIContainer")
         
-        // Preparar el data store (solo para datos reales, no para mocks)
         if !useMockData {
             print("MainView: Preparando data store para datos reales")
             let dataStore = diContainer.makeDataStore()
@@ -70,6 +68,6 @@ struct MainView: View {
 #Preview("MainView - Landscape") {
     MainView()
         .modelContainer(for: City.self, inMemory: true)
-        .environment(\.horizontalSizeClass, .regular) 
+        .environment(\.horizontalSizeClass, .regular)
         .environment(\.verticalSizeClass, .compact)
 }

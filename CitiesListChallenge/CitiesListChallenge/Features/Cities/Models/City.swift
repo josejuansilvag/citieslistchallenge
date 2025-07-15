@@ -22,12 +22,12 @@ final class City {
     var coord_lat: Double
     var isFavorite: Bool = false
 
-    // Computed property for display: "City, Country"
+    /// Computed property for display: "City, Country"
     var displayName: String {
         "\(name), \(country)"
     }
 
-    // Computed property for coordinates display: "Lat: X, Lon: Y"
+    /// Computed property for coordinates display: "Lat: X, Lon: Y"
     var coordinatesString: String {
         String(format: "Lat: %.4f, Lon: %.4f", coord_lat, coord_lon)
     }
@@ -55,7 +55,7 @@ extension City {
     }
 }
 
-// To conform to Decodable for JSON parsing, we use a temporary struct.
+/// To conform to Decodable for JSON parsing, we use a temporary struct.
 struct CityJSON: Codable, Sendable {
     let country: String
     let name: String

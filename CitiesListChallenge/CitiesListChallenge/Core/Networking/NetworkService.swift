@@ -8,11 +8,12 @@
 import Foundation
 
 // MARK: - Network Service Implementation
-class NetworkService: NetworkServiceProtocol {
+@MainActor
+final class NetworkService: NetworkServiceProtocol {
     private let networkClient: NetworkClientProtocol
     
-    init(networkClient: NetworkClientProtocol = NetworkClient()) {
-        self.networkClient = networkClient
+    init(networkClient: NetworkClientProtocol? = nil) {
+        self.networkClient = networkClient ?? NetworkClient()
     }
     
     func downloadCityData() async throws -> [CityJSON] {
@@ -43,13 +44,15 @@ enum APIEndpoint {
 
 
 // MARK: - Network Client Protocol
+@MainActor
 protocol NetworkClientProtocol {
     func request<T: Decodable>(_ endpoint: APIEndpoint, parameters: RequestParameters?) async throws -> T
     func request(_ endpoint: APIEndpoint, parameters: RequestParameters?) async throws -> Data
 }
 
 // MARK: - Network Client Implementation
-class NetworkClient: NetworkClientProtocol {
+@MainActor
+final class NetworkClient: NetworkClientProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
     

@@ -12,11 +12,12 @@ struct CityDetailView: View {
     @State var viewModel: CityDetailViewModel
     @State private var mapRegion: MKCoordinateRegion
 
+    /// Initialize mapRegion based on the city's coordinates
     init(city: City) {
         let detailViewModel = CityDetailViewModel(city: city)
         _viewModel = State(initialValue: detailViewModel)
         
-         _mapRegion = State(initialValue: MKCoordinateRegion(
+        _mapRegion = State(initialValue: MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1) // Zoom level
         ))
@@ -36,6 +37,7 @@ struct CityDetailView: View {
                 .font(.subheadline)
                 .foregroundColor(.gray)
 
+                /// Small Map Preview
                 Map(initialPosition: .region(mapRegion)) {
                     Marker(viewModel.city.name, coordinate: CLLocationCoordinate2D(latitude: viewModel.city.coord_lat, longitude: viewModel.city.coord_lon))
                 }
@@ -47,13 +49,13 @@ struct CityDetailView: View {
                         .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
                 
-                // Favorite Status (Read-only display, toggle is on the list view)
+                /// Favorite Status (Read-only display, toggle is on the list view)
                 HStack {
                     Image(systemName: viewModel.city.isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(viewModel.city.isFavorite ? .red : .gray)
                     Text(viewModel.city.isFavorite ? "Favorite" : "Not a Favorite")
                 }
-
+               
                 Section(header: Text("Raw Data").font(.title2)) {
                     InfoRow(label: "City ID", value: "\(viewModel.city.id)")
                     InfoRow(label: "Name", value: viewModel.city.name)
@@ -83,6 +85,7 @@ struct InfoRow: View {
         .padding(.vertical, 2)
     }
 }
+
 
 
 #Preview {

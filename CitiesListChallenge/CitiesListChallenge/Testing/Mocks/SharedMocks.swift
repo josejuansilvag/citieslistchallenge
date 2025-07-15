@@ -1,8 +1,8 @@
 //
-//  UIM.swift
+//  SharedMocks.swift
 //  CitiesListChallenge
 //
-//  Created by Jose Juan Silva Gamino on 09/07/25.
+//  Created by Jose Juan Silva Gamino on 14/07/25.
 //
 
 import Foundation
@@ -10,7 +10,8 @@ import SwiftData
 
 // MARK: - Mock Dependencies for Testing and UI Testing
 
-class MockNetworkClient: NetworkClientProtocol {
+@MainActor
+final class MockNetworkClient: NetworkClientProtocol {
     var shouldFail = false
     var mockData: Data = Data()
     
@@ -31,7 +32,8 @@ class MockNetworkClient: NetworkClientProtocol {
     }
 }
 
-class MockNetworkService: NetworkServiceProtocol {
+@MainActor
+final class MockNetworkService: NetworkServiceProtocol {
     private let networkClient: NetworkClientProtocol
     
     var shouldFail: Bool {
@@ -45,8 +47,8 @@ class MockNetworkService: NetworkServiceProtocol {
         }
     }
     
-    init(networkClient: NetworkClientProtocol = MockNetworkClient()) {
-        self.networkClient = networkClient
+    init(networkClient: NetworkClientProtocol? = nil) {
+        self.networkClient = networkClient ?? MockNetworkClient()
     }
     
     func downloadCityData() async throws -> [CityJSON] {
@@ -54,7 +56,8 @@ class MockNetworkService: NetworkServiceProtocol {
     }
 }
 
-class MockCityRepository: CityRepositoryProtocol {
+@MainActor
+final class MockCityRepository: CityRepositoryProtocol {
     var mockCities: [City] = []
     var shouldFail = false
     
@@ -63,6 +66,7 @@ class MockCityRepository: CityRepositoryProtocol {
     }
     
     func fetchCities(matching prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> SearchResult {
+        print("MockCityRepository: fetchCities - prefix: '\(prefix)', onlyFavorites: \(onlyFavorites), page: \(page)")
         if shouldFail {
             return SearchResult(cities: [], totalMatchingCount: 0)
         }
@@ -76,6 +80,7 @@ class MockCityRepository: CityRepositoryProtocol {
         let startIndex = page * pageSize
         let endIndex = min(startIndex + pageSize, filteredCities.count)
         let paginatedCities = Array(filteredCities[startIndex..<endIndex])
+        print("MockCityRepository: Retornando \(paginatedCities.count) ciudades de \(filteredCities.count) total")
         return SearchResult(cities: paginatedCities, totalMatchingCount: filteredCities.count)
     }
     
@@ -104,7 +109,8 @@ class MockCityRepository: CityRepositoryProtocol {
     }
 }
 
-class MockDataStore: DataStoreProtocol {
+@MainActor
+final class MockDataStore: DataStoreProtocol {
     private let repository: CityRepositoryProtocol
     private let networkService: NetworkServiceProtocol
     var isDataLoaded = false

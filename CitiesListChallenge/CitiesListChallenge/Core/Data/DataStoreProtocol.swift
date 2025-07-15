@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 
 // MARK: - Data Store Protocol
+@MainActor
 protocol DataStoreProtocol {
     func prepareDataStore() async
     func searchCities(prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> (cities: [City], totalMatchingCount: Int)
@@ -21,4 +22,3 @@ struct SearchResult {
     let cities: [City]
     let totalMatchingCount: Int
 }
-

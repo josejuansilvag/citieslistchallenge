@@ -11,7 +11,6 @@ struct CityRowView: View {
     let city: City
     let onFavoriteToggle: () -> Void
     let onShowDetailToggle: () -> Void
-    let onRowTap: () -> Void
     
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
@@ -37,22 +36,26 @@ struct CityRowView: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
+            
+            /// Botón de detalle
             Button(action: onShowDetailToggle) {
                 Image(systemName: "info.circle")
                     .foregroundColor(AppTheme.secondary)
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
-            Button(action: {
-                onFavoriteToggle()
-            }) {
+            .contentShape(Rectangle())
+            
+            /// Botón de favorito
+            Button(action: onFavoriteToggle) {
                 Image(systemName: city.isFavorite ? "star.fill" : "star")
                     .foregroundColor(city.isFavorite ? AppTheme.accent : .gray)
                     .imageScale(.large)
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(city.isFavorite ? "star.fill" : "star")
+            .contentShape(Rectangle())
+            .accessibilityLabel(city.isFavorite ? "Remove from favorites" : "Add to favorites")
         }
         .padding(16)
         .background(
@@ -61,21 +64,16 @@ struct CityRowView: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
         )
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onRowTap()
-        }
     }
 }
-
 
 #Preview {
     let sampleCity1 = City(id: 1, name: "Morelia", country: "MX", coord_lon: -74.0060, coord_lat: 40.7128, isFavorite: true)
     let sampleCity2 = City(id: 2, name: "Buenos Aires", country: "AR", coord_lon: 100.2093, coord_lat: -38.8688, isFavorite: false)
     
     VStack {
-        CityRowView(city: sampleCity1, onFavoriteToggle: { print("Toggled Fav 1") }, onShowDetailToggle: {}, onRowTap: { print("Row 1 tapped") })
-        CityRowView(city: sampleCity2, onFavoriteToggle: { print("Toggled Fav 2") }, onShowDetailToggle: {}, onRowTap: { print("Row 2 tapped") })
+        CityRowView(city: sampleCity1, onFavoriteToggle: { print("Toggled Fav 1") }, onShowDetailToggle: { print("Show detail 1") })
+        CityRowView(city: sampleCity2, onFavoriteToggle: { print("Toggled Fav 2") }, onShowDetailToggle: { print("Show detail 2") })
     }
     .padding()
 }

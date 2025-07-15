@@ -7,27 +7,23 @@
 
 import Foundation
 import SwiftData
-import Combine
 
 @Observable @MainActor
-class CityListViewModel {
+final class CityListViewModel {
     private let dataStore: DataStoreProtocol
-    private var cancellables = Set<AnyCancellable>()
+    private var searchTask: Task<Void, Never>?
     
     var searchText: String = "" {
         didSet {
-            searchTextSubject.send(searchText)
+            debounceSearch()
         }
     }
     
     var showOnlyFavorites: Bool = false {
         didSet {
-            showOnlyFavoritesSubject.send(showOnlyFavorites)
+            debounceSearch()
         }
     }
-    
-    private let searchTextSubject = CurrentValueSubject<String, Never>("")
-    private let showOnlyFavoritesSubject = CurrentValueSubject<Bool, Never>(false)
     
     var cities: [City] = []
     var isLoading = false
@@ -40,19 +36,18 @@ class CityListViewModel {
     
     init(dataStore: DataStoreProtocol) {
         self.dataStore = dataStore
-        setupSearchSubscription()
     }
     
-    private func setupSearchSubscription() {
-        Publishers.CombineLatest(searchTextSubject, showOnlyFavoritesSubject)
-            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-            .removeDuplicates { prev, curr in
-                prev.0 == curr.0 && prev.1 == curr.1
+    private func debounceSearch() {
+        searchTask?.cancel()
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            if !Task.isCancelled {
+                await MainActor.run {
+                    resetAndLoadFirstPage()
+                }
             }
-            .sink { [weak self] searchText, showOnlyFavorites in
-                 self?.resetAndLoadFirstPage()
-            }
-            .store(in: &cancellables)
+        }
     }
     
     func resetAndLoadFirstPage() {
@@ -71,6 +66,7 @@ class CityListViewModel {
         await dataStore.prepareDataStore()
         isLoading = false
         
+        /// Reset y cargar primera página de forma async
         currentPage = 0
         hasMorePages = true
         await loadNextPage()

@@ -8,12 +8,15 @@
 import Foundation
 import SwiftData
 
-class DataStore: DataStoreProtocol {
+@MainActor
+final class DataStore: DataStoreProtocol {
     private let repository: CityRepositoryProtocol
     private let networkService: NetworkServiceProtocol
     private var isDataLoaded = false
     private var startTime: TimeInterval = 0
     private let chunkSize = 2000
+    
+    private static let initialDataLoadedKey = "initialDataLoaded"
     
     private let defaultSortDescriptor: [SortDescriptor<City>] = [
         SortDescriptor(\City.name),
@@ -21,8 +24,8 @@ class DataStore: DataStoreProtocol {
     ]
     
     private var isInitialDataLoaded: Bool {
-        get { UserDefaults.standard.bool(forKey: "initialDataLoaded") }
-        set { UserDefaults.standard.set(newValue, forKey: "initialDataLoaded") }
+        get { UserDefaults.standard.bool(forKey: Self.initialDataLoadedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.initialDataLoadedKey) }
     }
     
     init(repository: CityRepositoryProtocol, networkService: NetworkServiceProtocol) {
@@ -30,7 +33,7 @@ class DataStore: DataStoreProtocol {
         self.networkService = networkService
         
         if ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting") {
-            Task { @MainActor in
+            Task {
                 await self.clearAllData()
             }
         }
@@ -38,50 +41,49 @@ class DataStore: DataStoreProtocol {
     
     // MARK: - Data Preparation
     
-    @MainActor
     func prepareDataStore() async {
+        // Verificar si ya hay ciudades en la base de datos
         let count = await repository.getCitiesCount()
         if count > 0 {
+            print("DataStore: Ya existen \(count) ciudades, no es necesario descargar")
             return
         }
         await downloadAndStoreCities()
+        // Verificar count después de descargar
+        let countAfterDownload = await repository.getCitiesCount()
     }
     
-    @MainActor
     private func downloadAndStoreCities() async {
         do {
             startTime = Date().timeIntervalSince1970
             let cityJSONs = try await networkService.downloadCityData()
-            printTimeElapsed(message: "Downloaded city data Total cities to process: \(cityJSONs.count)")
             await repository.clearAllCities()
-            startTime = Date().timeIntervalSince1970
             let chunks = cityJSONs.chunked(into: chunkSize)
-            for chunk in chunks {
+            for (index, chunk) in chunks.enumerated() {
                 await self.repository.saveCitiesFromJSON(chunk)
             }
             
             isInitialDataLoaded = true
             isDataLoaded = true
-            printTimeElapsed(message: " ✅ Inserted and saved all cities")
         } catch {
             print("❌ Error during full refresh and store cities: \(error)")
+            // Reset flags on error
+            isInitialDataLoaded = false
+            isDataLoaded = false
         }
     }
     
     // MARK: - DataStoreProtocol Implementation
     
-    @MainActor
     func searchCities(prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> (cities: [City], totalMatchingCount: Int) {
         let result = await repository.fetchCities(matching: prefix, onlyFavorites: onlyFavorites, page: page, pageSize: pageSize)
         return (result.cities, result.totalMatchingCount)
     }
     
-    @MainActor
     func toggleFavorite(forCityID cityID: Int) async {
         await repository.toggleFavorite(forCityID: cityID)
     }
     
-    @MainActor
     func clearAllData() async {
         await repository.clearAllCities()
         isInitialDataLoaded = false
@@ -89,12 +91,4 @@ class DataStore: DataStoreProtocol {
     }
 }
 
-// MARK: - Helpers
 
-extension DataStore {
-    private func printTimeElapsed(message: String) {
-        let timeElapsed = Date().timeIntervalSince1970 - startTime
-        print("⏱️ \(message): \(String(format: "%.3f", timeElapsed)) seconds")
-        startTime = Date().timeIntervalSince1970
-    }
-}

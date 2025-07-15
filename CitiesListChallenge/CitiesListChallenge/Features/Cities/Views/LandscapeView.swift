@@ -11,9 +11,8 @@ import SwiftData
 
 struct LandscapeView: View {
     @State var viewModel: CityListViewModel
-    
     @Binding var selectedCityForLandscapeMap: City?
-    @State private var showingCityDetail: City? = nil
+    @ObservedObject var coordinator: MainCoordinator
     
     var body: some View {
         NavigationView {
@@ -31,18 +30,17 @@ struct LandscapeView: View {
                                     viewModel.toggleFavorite(forCityID: city.id)
                                 },
                                 onShowDetailToggle: {
-                                    showingCityDetail = city
-                                },
-                                onRowTap: {
-                                    selectedCityForLandscapeMap = city
+                                    coordinator.showCityDetail(city)
                                 }
                             )
                             .padding(.vertical, 12)
                             .padding(.trailing, 12)
                             .listRowInsets(EdgeInsets())
                             .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedCityForLandscapeMap = city
+                            }
                         }
-                        
                         if viewModel.hasMorePages {
                             ProgressView()
                                 .onAppear {
@@ -73,15 +71,12 @@ struct LandscapeView: View {
             .task {
                 await viewModel.loadInitialDataIfNeeded()
             }
-            .sheet(item: $showingCityDetail) { city in
+            .sheet(item: $coordinator.presentedSheet) { sheetRoute in
+                coordinator.view(for: sheetRoute)
+            }
+            .fullScreenCover(item: $coordinator.presentedFullScreen) { fullScreenRoute in
                 NavigationStack {
-                    CityDetailView(city: city)
-                        .navigationTitle("Details: \(city.name)")
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarLeading) {
-                                Button("Done") { showingCityDetail = nil }
-                            }
-                        }
+                    coordinator.view(for: fullScreenRoute)
                 }
             }
         }
@@ -93,12 +88,14 @@ struct LandscapeView_Previews: PreviewProvider {
         struct PreviewWrapper: View {
             @State private var previewSelectedCity: City? = nil
             var body: some View {
+                let diContainer = DIContainer(modelContainer: try! ModelContainer(for: City.self), useMockData: true)
+                let mainCoordinator = MainCoordinator(diContainer: diContainer)
+                let viewModel = mainCoordinator.makeCityListViewModel()
+                
                 LandscapeView(
-                    viewModel: CityListViewModel(dataStore: DataStore(
-                        repository: CityRepository(modelContext: ModelContext(try! ModelContainer(for: City.self))),
-                        networkService: NetworkService()
-                    )),
-                    selectedCityForLandscapeMap: $previewSelectedCity
+                    viewModel: viewModel,
+                    selectedCityForLandscapeMap: $previewSelectedCity,
+                    coordinator: mainCoordinator
                 )
                 .modelContainer(for: City.self, inMemory: true)
             }

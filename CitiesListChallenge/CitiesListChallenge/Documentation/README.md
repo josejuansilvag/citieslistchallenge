@@ -177,11 +177,11 @@ let predicate = #Predicate<City> {
 
 #### 4. **Performance Comparison**
 
-| Approach | Memory Usage | Search Time | Scalability |
-|----------|-------------|-------------|-------------|
-| **Database Indexing** | Low | O(log n) | Excellent |
-| In-Memory Filtering | High | O(n) | Poor |
-| Linear Search | Low | O(n) | Poor |
+| Approach              | Memory Usage | Search Time | Scalability |
+|-----------------------|--------------|-------------|-------------|
+| **Database Indexing** | Low          | O(log n)    | Excellent   |
+| In-Memory Filtering   | High         | O(n)        | Poor        |
+| Linear Search         | Low          | O(n)        | Poor        |
 
 ### 5. **Debouncing for UI Responsiveness**
 

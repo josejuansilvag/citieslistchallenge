@@ -45,6 +45,7 @@ struct CityRowView: View {
             }
             .buttonStyle(.plain)
             .contentShape(Rectangle())
+            .accessibilityIdentifier("info.circle")
             
             /// Botón de favorito
             Button(action: onFavoriteToggle) {
@@ -56,6 +57,7 @@ struct CityRowView: View {
             .buttonStyle(.plain)
             .contentShape(Rectangle())
             .accessibilityLabel(city.isFavorite ? "Remove from favorites" : "Add to favorites")
+            .accessibilityIdentifier("favorite.button")
         }
         .padding(16)
         .background(

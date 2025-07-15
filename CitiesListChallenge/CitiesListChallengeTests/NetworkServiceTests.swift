@@ -8,6 +8,7 @@
 import XCTest
 @testable import CitiesListChallenge
 
+@MainActor
 class NetworkServiceTests: XCTestCase {
     var networkService: NetworkServiceProtocol!
     var mockNetworkClient: MockNetworkClient!

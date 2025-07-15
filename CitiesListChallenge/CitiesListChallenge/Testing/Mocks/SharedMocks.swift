@@ -15,6 +15,13 @@ final class MockNetworkClient: NetworkClientProtocol {
     var shouldFail = false
     var mockData: Data = Data()
     
+    init() {
+        // For UI testing, populate with mock data
+        if ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting") {
+            self.mockData = MockDataSetup.mockData
+        }
+    }
+    
     func request<T: Decodable>(_ endpoint: APIEndpoint, parameters: RequestParameters?) async throws -> T {
         if shouldFail {
             throw NetworkError.requestFailed(NSError(domain: "Mock", code: 500, userInfo: nil))

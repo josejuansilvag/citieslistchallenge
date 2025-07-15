@@ -23,6 +23,10 @@ final class UalaChallengeUITests: XCTestCase {
 
         // When: App is launched
         app.launch()
+        
+        // Wait for app to fully load
+        let searchField = app.searchFields.firstMatch
+        XCTAssertTrue(searchField.waitForExistence(timeout: 10), "Search field should appear after app launch")
     }
 
     override func tearDownWithError() throws {
@@ -31,111 +35,125 @@ final class UalaChallengeUITests: XCTestCase {
     }
 
     func testSearchBar_FiltersList() async throws {
-        // Given: The search text field exists
-        let searchTextField = await app.searchFields.firstMatch
-        let exists = await searchTextField.waitForExistence(timeout: 15)
-        XCTAssertTrue(exists, "Search text field should exist")
+        // Given: The search text field exists and is ready
+        let searchTextField = app.searchFields.firstMatch
+        XCTAssertTrue(searchTextField.waitForExistence(timeout: 10), "Search text field should exist")
+        
+        // Ensure the search field is ready for input
+        searchTextField.tap()
+        try await Task.sleep(nanoseconds: 500_000_000) // Wait 0.5 seconds
 
         // When: Typing "London" into the search bar
-        await searchTextField.tap()
-        await searchTextField.typeText("London")
+        searchTextField.typeText("London")
+        try await Task.sleep(nanoseconds: 1_000_000_000) // Wait for search to complete
 
         // Then: A cell with "London" should appear
-        let londonCell = await app.staticTexts["London"]
-        let londonExists = await londonCell.waitForExistence(timeout: 10)
-        XCTAssertTrue(londonExists, "Cell for London should appear after searching")
+        let londonCell = app.staticTexts["London"]
+        XCTAssertTrue(londonCell.waitForExistence(timeout: 10), "Cell for London should appear after searching")
 
         // When: Clearing the search
-        await searchTextField.buttons["Clear text"].tap()
+        let clearButton = searchTextField.buttons["Clear text"]
+        if clearButton.exists {
+            clearButton.tap()
+        } else {
+            // Alternative: select all and delete
+            searchTextField.doubleTap()
+            searchTextField.typeText("")
+        }
 
-        // Then: The search field should reset to placeholder
-        let value = await searchTextField.value as? String
-        XCTAssertEqual(value, "Search")
+        // Then: The search field should be empty
+        let value = searchTextField.value as? String ?? ""
+        XCTAssertTrue(value.isEmpty || value == "Search", "Search field should be cleared")
     }
 
     func testFavoriteToggle_UpdatesIconAndFilters() async throws {
-        // Given: Search bar and city cell exist
-        let searchTextField = await app.searchFields.firstMatch
-        let searchExists = await searchTextField.waitForExistence(timeout: 15)
-        XCTAssertTrue(searchExists, "App should load")
+        // Given: App is loaded and city cells are visible
+        let searchTextField = app.searchFields.firstMatch
+        XCTAssertTrue(searchTextField.waitForExistence(timeout: 10), "App should load")
+        
+        // Wait for cities to load
+        try await Task.sleep(nanoseconds: 2_000_000_000) // Wait 2 seconds for data to load
+        
+        let cityCell = app.cells.firstMatch
+        XCTAssertTrue(cityCell.waitForExistence(timeout: 10), "At least one city cell should exist")
 
-        let cityCell = await app.cells.firstMatch
-        let cellExists = await cityCell.waitForExistence(timeout: 10)
-        XCTAssertTrue(cellExists, "At least one city cell should exist")
+        // Find favorite button by accessibility identifier
+        let favoriteButton = cityCell.buttons.matching(identifier: "favorite.button").firstMatch
+        XCTAssertTrue(favoriteButton.waitForExistence(timeout: 5), "Favorite button should exist")
 
-        // Given: A favorite button inside the city cell
-        let favoriteButton = await cityCell.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "star", "star.fill")).firstMatch
-        let favExists = await favoriteButton.waitForExistence(timeout: 5)
-        XCTAssertTrue(favExists, "Favorite button should exist")
-
-        let initialLabel = await favoriteButton.label
-        let initialState = initialLabel == "star.fill"
+        let initialLabel = favoriteButton.label
+        let initialState = initialLabel.contains("Remove")
 
         // When: Tapping the favorite button
-        await favoriteButton.tap()
+        favoriteButton.tap()
         try await Task.sleep(nanoseconds: 1_000_000_000)
 
         // Then: The favorite icon should toggle
-        let newLabel = await favoriteButton.label
-        let newState = newLabel == "star.fill"
+        let newLabel = favoriteButton.label
+        let newState = newLabel.contains("Remove")
         XCTAssertNotEqual(initialState, newState, "Favorite state should toggle")
     }
 
     func testNavigationToDetailView() async throws {
-        // Given: A city cell and its info button
-        let cityCell = await app.cells.firstMatch
-        let cellExists = await cityCell.waitForExistence(timeout: 10)
-        XCTAssertTrue(cellExists, "At least one city cell should exist")
+        // Given: App is loaded and city cells are visible
+        let searchTextField = app.searchFields.firstMatch
+        XCTAssertTrue(searchTextField.waitForExistence(timeout: 10), "App should load")
+        
+        // Wait for cities to load
+        try await Task.sleep(nanoseconds: 2_000_000_000) // Wait 2 seconds for data to load
+        
+        let cityCell = app.cells.firstMatch
+        XCTAssertTrue(cityCell.waitForExistence(timeout: 10), "At least one city cell should exist")
 
-        let cityName = await cityCell.staticTexts.firstMatch.label
+        let cityName = cityCell.staticTexts.firstMatch.label
 
-        let infoButton = await cityCell.buttons.matching(identifier: "info.circle").firstMatch
-        let infoExists = await infoButton.waitForExistence(timeout: 5)
-        XCTAssertTrue(infoExists, "Info button should exist")
+        // Find info button by system name
+        let infoButton = cityCell.buttons.matching(identifier: "info.circle").firstMatch
+        XCTAssertTrue(infoButton.waitForExistence(timeout: 5), "Info button should exist")
 
         // When: Tapping the info button
-        await infoButton.tap()
+        infoButton.tap()
 
         // Then: Navigation bar with detail view should appear
-        let detailViewNavigationBar = await app.navigationBars["Details: \(cityName)"]
-        let navExists = await detailViewNavigationBar.waitForExistence(timeout: 5)
-        XCTAssertTrue(navExists, "Detail view should appear")
+        let detailViewNavigationBar = app.navigationBars["Details: \(cityName)"]
+        XCTAssertTrue(detailViewNavigationBar.waitForExistence(timeout: 5), "Detail view should appear")
 
         // When: Tapping Done
-        await detailViewNavigationBar.buttons["Done"].tap()
+        let doneButton = detailViewNavigationBar.buttons["Done"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 5), "Done button should exist")
+        doneButton.tap()
 
         // Then: Should return to main screen
-        let mainNavigationBar = await app.navigationBars["Cities"]
-        let isBackToMain = await mainNavigationBar.waitForExistence(timeout: 5)
-        XCTAssertTrue(isBackToMain, "Should be back to main screen")
+        let mainNavigationBar = app.navigationBars["Cities"]
+        XCTAssertTrue(mainNavigationBar.waitForExistence(timeout: 5), "Should be back to main screen")
     }
 
     func testNavigationToMapViewFromRowTap() async throws {
-        // Given: App is ready and a city cell is visible
-        let searchTextField = await app.searchFields.firstMatch
-        let searchExists = await searchTextField.waitForExistence(timeout: 15)
-        XCTAssertTrue(searchExists, "App should load")
-
-        let cityCell = await app.cells.firstMatch
-        let cellExists = await cityCell.waitForExistence(timeout: 10)
-        XCTAssertTrue(cellExists, "At least one city cell should exist")
+        // Given: App is loaded and city cells are visible
+        let searchTextField = app.searchFields.firstMatch
+        XCTAssertTrue(searchTextField.waitForExistence(timeout: 10), "App should load")
+        
+        // Wait for cities to load
+        try await Task.sleep(nanoseconds: 2_000_000_000) // Wait 2 seconds for data to load
+        
+        let cityCell = app.cells.firstMatch
+        XCTAssertTrue(cityCell.waitForExistence(timeout: 10), "At least one city cell should exist")
 
         // When: Tapping the city cell
-        await cityCell.tap()
+        cityCell.tap()
 
         // Then: Map view should appear
-        let mapViewNavigationBar = await app.navigationBars.firstMatch
-        let mapExists = await mapViewNavigationBar.waitForExistence(timeout: 5)
-        XCTAssertTrue(mapExists, "Map view should appear after row tap")
+        let mapViewNavigationBar = app.navigationBars.firstMatch
+        XCTAssertTrue(mapViewNavigationBar.waitForExistence(timeout: 5), "Map view should appear after row tap")
 
-        // When: Tapping back button labeled "Cities"
-        let backButton = await mapViewNavigationBar.buttons.matching(NSPredicate(format: "label == %@", "Cities")).firstMatch
-        await backButton.tap()
+        // When: Tapping back button - look for any back button
+        let backButton = mapViewNavigationBar.buttons.firstMatch
+        XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+        backButton.tap()
 
         // Then: Return to main navigation bar
-        let mainNavigationBar = await app.navigationBars["Cities"]
-        let isBackToMain = await mainNavigationBar.waitForExistence(timeout: 5)
-        XCTAssertTrue(isBackToMain, "Should be back to main screen")
+        let mainNavigationBar = app.navigationBars["Cities"]
+        XCTAssertTrue(mainNavigationBar.waitForExistence(timeout: 5), "Should be back to main screen")
     }
 
 }

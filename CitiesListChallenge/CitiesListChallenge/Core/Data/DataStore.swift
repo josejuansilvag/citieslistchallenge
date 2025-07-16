@@ -49,8 +49,6 @@ final class DataStore: DataStoreProtocol {
             return
         }
         await downloadAndStoreCities()
-        // Verificar count después de descargar
-        let countAfterDownload = await repository.getCitiesCount()
     }
     
     private func downloadAndStoreCities() async {
@@ -59,7 +57,7 @@ final class DataStore: DataStoreProtocol {
             let cityJSONs = try await networkService.downloadCityData()
             await repository.clearAllCities()
             let chunks = cityJSONs.chunked(into: chunkSize)
-            for (index, chunk) in chunks.enumerated() {
+            for (_, chunk) in chunks.enumerated() {
                 await self.repository.saveCitiesFromJSON(chunk)
             }
             

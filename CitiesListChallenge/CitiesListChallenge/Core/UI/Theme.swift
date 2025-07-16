@@ -9,8 +9,8 @@ import SwiftUI
 
 struct AppTheme {
     // Colores del sistema para que funcionen inmediatamente
-    static let primary = Color("Primary")
-    static let secondary = Color("Secondary")
+    static let primary = Color("CitiesBlue")
+    static let secondary = Color("CitiesYellow")
     static let background = Color("Background")
     static let cellBackground = Color.white
     static let text = Color("Text")

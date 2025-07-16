@@ -31,9 +31,11 @@ struct CityRowView: View {
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(AppTheme.text)
+                    .accessibilityIdentifier("city.name")
                 Text(city.country)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .accessibilityIdentifier("city.country")
             }
             Spacer()
             

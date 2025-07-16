@@ -31,29 +31,28 @@ final class MockCoordinator: ObservableCoordinatorProtocol {
         showCityDetailCalled = true
         lastCityDetailShown = city
         presentedSheet = .cityDetail(city)
-        print("🟡 MockCoordinator: showCityDetail called for \(city.name)")
     }
     
     func showMapView(_ city: City) {
         showMapViewCalled = true
         lastMapViewShown = city
         navigationPath.append(NavigationRoute.mapView(city))
-        print("🟡 MockCoordinator: showMapView called for \(city.name)")
     }
     
     func dismissSheet() {
         dismissSheetCalled = true
         presentedSheet = nil
-        print("🟡 MockCoordinator: dismissSheet called")
     }
     
     func dismissFullScreen() {
         dismissFullScreenCalled = true
         presentedFullScreen = nil
-        print("🟡 MockCoordinator: dismissFullScreen called")
     }
     
     // MARK: - Test Helper Methods
+    
+    // Note: These helper methods are available for future testing needs
+    // but are not currently used in the test suite
     
     /// Resetea el estado del mock para nuevos tests
     func reset() {

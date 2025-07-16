@@ -19,7 +19,8 @@ struct MainView: View {
     
     init() {
         let modelContainer = try! ModelContainer(for: City.self)
-        let diContainer = DIContainer(modelContainer: modelContainer, useMockData: false)
+        let useMockData = ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
+        let diContainer = DIContainer(modelContainer: modelContainer, useMockData: useMockData)
         let factory = CoordinatorFactory(diContainer: diContainer)
         _coordinator = StateObject(wrappedValue: factory.makeMainCoordinator())
     }
@@ -63,13 +64,10 @@ struct MainView: View {
     @MainActor
     private func createViewModelIfNeeded() async {
         guard cityListViewModel == nil else { return }
-        print("MainView: useMockData = \(useMockData)")
         cityListViewModel = coordinator.makeCityListViewModel()
-        if !useMockData {
-            print("MainView: Preparando data store para datos reales")
-            let dataStore = coordinator.getDIContainer().makeDataStore()
-            await dataStore.prepareDataStore()
-        }
+        // Always prepare data store, whether using mock or real data
+        let dataStore = coordinator.getDIContainer().makeDataStore()
+        await dataStore.prepareDataStore()
     }
 }
 

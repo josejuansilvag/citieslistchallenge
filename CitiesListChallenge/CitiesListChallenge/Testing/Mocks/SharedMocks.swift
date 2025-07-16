@@ -16,7 +16,6 @@ final class MockNetworkClient: NetworkClientProtocol {
     var mockData: Data = Data()
     
     init() {
-        // For UI testing, populate with mock data
         if ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting") {
             self.mockData = MockDataSetup.mockData
         }
@@ -68,12 +67,7 @@ final class MockCityRepository: CityRepositoryProtocol {
     var mockCities: [City] = []
     var shouldFail = false
     
-    init() {
-        print("MockCityRepository: Constructor llamado")
-    }
-    
     func fetchCities(matching prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> SearchResult {
-        print("MockCityRepository: fetchCities - prefix: '\(prefix)', onlyFavorites: \(onlyFavorites), page: \(page)")
         if shouldFail {
             return SearchResult(cities: [], totalMatchingCount: 0)
         }

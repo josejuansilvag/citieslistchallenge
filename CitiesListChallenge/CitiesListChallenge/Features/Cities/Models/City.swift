@@ -10,12 +10,24 @@ import SwiftData
 
 @Model
 final class City {
+    /// INDEXED FIELDS:
+    /// 1. displayName_lowercased: Primary search field for prefix matching
+    /// 2. isFavorite: Secondary field for favorites filtering
+    /// 
+    /// - This ensures optimal performance for all search scenarios
     #Index([
         \City.displayName_lowercased,
         \City.isFavorite
     ])
     @Attribute(.unique) var id: Int
+    
+    /// OPTIMIZED SEARCH FIELD: Pre-computed lowercase display name
+    /// - Pre-computed at creation time (no runtime overhead)
+    /// - Indexed for efficient range queries
+    /// - Enables case-insensitive prefix matching
+    /// Example: "London, GB" becomes "london, gb"
     var displayName_lowercased: String
+    
     var name: String
     var country: String
     var coord_lon: Double

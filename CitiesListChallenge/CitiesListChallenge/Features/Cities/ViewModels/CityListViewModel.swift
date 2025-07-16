@@ -38,10 +38,24 @@ final class CityListViewModel {
         self.dataStore = dataStore
     }
     
+    /// DEBOUNCED SEARCH: Optimized for UI Responsiveness
+    /// This function implements debouncing to prevent excessive database calls
+    /// while maintaining a responsive user experience. Here's why this is crucial:
+    /// 
+    /// Reduces Database Load: Only searches after user stops typing
+    /// Smooth UI: Prevents excessive list updates while typing
+    /// Battery Efficiency: Reduces unnecessary CPU/network usage
+    /// 
     private func debounceSearch() {
+        //CANCEL PREVIOUS: Prevent race conditions and unnecessary work
         searchTask?.cancel()
+        
+        // SCHEDULE NEW SEARCH: With debouncing delay
         searchTask = Task {
+            // Wait for user to stop typing
             try? await Task.sleep(for: .milliseconds(300))
+            
+            // EXECUTE ONLY IF NOT CANCELLED: User stopped typing
             if !Task.isCancelled {
                 await MainActor.run {
                     resetAndLoadFirstPage()

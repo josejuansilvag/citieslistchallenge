@@ -21,15 +21,40 @@ final class CityRepository: CityRepositoryProtocol {
         self.modelContext = modelContext
     }
     
+    /// OPTIMIZED PREFIX SEARCH IMPLEMENTATION
+    /// 
+    /// This function implements a highly optimized database-level prefix search that provides
+    /// O(log n) complexity instead of O(n) for in-memory filtering. 
+    /// 
+    /// PERFORMANCE BENEFITS:
+    /// 1. Database Indexing: Uses SwiftData's B-tree indexing on displayName_lowercased
+    /// 2. Range Queries: Leverages SQLite's efficient range operations
+    /// 3. Memory Efficiency: Only loads matching results, not entire dataset
+    /// 4. Pagination: Reduces memory footprint for large result sets
+    /// 
+    /// HOW THE ALGORITHM WORKS:
+    /// 1. Pre-processing: Trim whitespace and convert to lowercase for consistency
+    /// 2. Range Construction: Create upper/lower bounds using Unicode boundaries
+    /// 3. Database Query: Use SwiftData predicates for efficient filtering
+    /// 4. Pagination: Apply offset/limit for memory-efficient loading
+    /// 
     func fetchCities(matching prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> SearchResult {
+        // Input validation for pagination parameters
         guard page >= 0, pageSize > 0 else {
             return SearchResult(cities: [], totalMatchingCount: 0)
         }
 
+        // PRE-PROCESSING: Normalize search input
         let trimmedPrefix = prefix.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         var finalPredicate: Predicate<City>? = nil
 
         if !trimmedPrefix.isEmpty {
+            // We create a range query using Unicode boundaries:
+            // - lowerBound: The exact prefix we're looking for
+            // - upperBound: prefix + "\u{FFFF}" (highest Unicode character)
+            // 
+            // This ensures we get ALL strings that start with our prefix
+            // Example: prefix "lon" will match "London", "Long Beach", etc.
             let lowerBound = trimmedPrefix
             let upperBound = trimmedPrefix + "\u{FFFF}"
 
@@ -40,19 +65,19 @@ final class CityRepository: CityRepositoryProtocol {
                     $0.isFavorite
                 }
             } else {
+                // PURE PREFIX SEARCH: Most efficient for general searches
                 finalPredicate = #Predicate<City> {
                     $0.displayName_lowercased >= lowerBound &&
                     $0.displayName_lowercased < upperBound
                 }
             }
         } else if onlyFavorites {
+            //FAVORITES-ONLY SEARCH: When no prefix is provided
             finalPredicate = #Predicate<City> { $0.isFavorite }
         }
 
         do {
             var queryDescriptor = FetchDescriptor<City>(predicate: finalPredicate, sortBy: defaultSortDescriptor)
-            
-            // Get total count safely
             let totalMatchingCount: Int
             do {
                 totalMatchingCount = try modelContext.fetchCount(queryDescriptor)
@@ -61,13 +86,22 @@ final class CityRepository: CityRepositoryProtocol {
                 return SearchResult(cities: [], totalMatchingCount: 0)
             }
             
+            // 🚫 EARLY EXIT: If no matches, return immediately
+            // This prevents unnecessary pagination calculations
             guard totalMatchingCount > 0 else {
                 return SearchResult(cities: [], totalMatchingCount: 0)
             }
 
+            // Pagination parameters:
+            // - fetchOffset: Skip previous pages (page * pageSize)
+            // - fetchLimit: Only load current page (pageSize)
+            // 
+            // This ensures we only load the data we need, keeping memory usage
+            // constant regardless of total dataset size
             queryDescriptor.fetchOffset = page * pageSize
             queryDescriptor.fetchLimit = pageSize
 
+            // EXECUTE FINAL QUERY
             let cities = try modelContext.fetch(queryDescriptor)
             return SearchResult(cities: cities, totalMatchingCount: totalMatchingCount)
         } catch {

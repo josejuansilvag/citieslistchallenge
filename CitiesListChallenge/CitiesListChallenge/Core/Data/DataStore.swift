@@ -73,6 +73,10 @@ final class DataStore: DataStoreProtocol {
     
     // MARK: - DataStoreProtocol Implementation
     
+   
+    /// This function provides the main search interface that leverages the optimized
+    /// repository implementation. It's designed to handle large datasets efficiently:
+  
     func searchCities(prefix: String, onlyFavorites: Bool, page: Int, pageSize: Int) async -> (cities: [City], totalMatchingCount: Int) {
         let result = await repository.fetchCities(matching: prefix, onlyFavorites: onlyFavorites, page: page, pageSize: pageSize)
         return (result.cities, result.totalMatchingCount)

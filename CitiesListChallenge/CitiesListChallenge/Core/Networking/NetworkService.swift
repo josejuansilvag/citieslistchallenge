@@ -7,8 +7,13 @@
 
 import Foundation
 
+// MARK: - Network Service Protocol
+protocol NetworkServiceProtocol {
+    func downloadCityData() async throws -> [CityJSON]
+    func getWeather(lat: Double, lon: Double) async throws -> WeatherInfo
+}
+
 // MARK: - Network Service Implementation
-@MainActor
 final class NetworkService: NetworkServiceProtocol {
     private let networkClient: NetworkClientProtocol
     
@@ -19,39 +24,42 @@ final class NetworkService: NetworkServiceProtocol {
     func downloadCityData() async throws -> [CityJSON] {
         return try await networkClient.request(.cities, parameters: nil)
     }
+    
+    func getWeather(lat: Double, lon: Double) async throws -> WeatherInfo {
+        // WeatherAPI.com requiere API key en la URL
+        return try await networkClient.request(.weather(lat: lat, lon: lon), parameters: nil)
+    }
 }
 
 // MARK: - API Endpoints
 enum APIEndpoint {
     case cities
+    case weather(lat: Double, lon: Double)
+    
+    var method: HTTPMethod {
+        switch self {
+        case .cities, .weather:
+            return .GET
+        }
+    }
     
     var path: String {
         switch self {
         case .cities:
             return "https://gist.githubusercontent.com/hernan-uala/dce8843a8edbe0b0018b32e137bc2b3a/raw/0996accf70cb0ca0e16f9a99e0ee185fafca7af1/cities.json"
-        }
-    }
-    
-    var method: HTTPMethod {
-        switch self {
-        case .cities:
-            return .GET
+        case .weather(let lat, let lon):
+            return "https://api.weatherapi.com/v1/current.json?key=be57c5a67b934bb48e305247251707&q=\(lat),\(lon)&aqi=no"
         }
     }
 }
 
-
-
-
 // MARK: - Network Client Protocol
-@MainActor
 protocol NetworkClientProtocol {
     func request<T: Decodable>(_ endpoint: APIEndpoint, parameters: RequestParameters?) async throws -> T
     func request(_ endpoint: APIEndpoint, parameters: RequestParameters?) async throws -> Data
 }
 
 // MARK: - Network Client Implementation
-@MainActor
 final class NetworkClient: NetworkClientProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -132,7 +140,6 @@ struct RequestParameters {
         self.headers = headers
     }
 }
-
 
 // MARK: - Network Errors
 enum NetworkError: Error, LocalizedError {

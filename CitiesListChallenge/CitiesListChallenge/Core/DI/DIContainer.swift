@@ -47,7 +47,7 @@ final class DIContainer: DIContainerProtocol {
     }
     
     func makeCityDetailViewModel(for city: City) -> CityDetailViewModel {
-        return CityDetailViewModel(city: city)
+        return CityDetailViewModel(city: city, networkService: networkService)
     }
     
     // MARK: - Service Creation

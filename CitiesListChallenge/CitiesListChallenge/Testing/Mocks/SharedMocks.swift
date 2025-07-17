@@ -60,6 +60,35 @@ final class MockNetworkService: NetworkServiceProtocol {
     func downloadCityData() async throws -> [CityJSON] {
         return try await networkClient.request(.cities, parameters: nil)
     }
+    
+    func getWeather(lat: Double, lon: Double) async throws -> WeatherInfo {
+        let sample = WeatherInfo(
+            location: Location(
+                name: "Test City",
+                region: "TestRegion",
+                country: "Test Country",
+                lat: lat,
+                lon: lon,
+                localtime: "2024-12-01 10:00"
+            ),
+            current: CurrentWeather(
+                temp_c: 22.0,
+                feelslike_c: 22.0,
+                humidity: 50,
+                pressure_mb: 1013.0,
+                wind_kph: 10.0,
+                wind_degree: 180,
+                uv: 5.0,
+                vis_km: 10.0,
+                condition: WeatherCondition(
+                    text: "Sunny",
+                    icon: "https://cdn.weatherapi.com/weather/64x64/day/113.png",
+                    code: 10
+                )
+            )
+        )
+        return sample
+    }
 }
 
 @MainActor
@@ -159,4 +188,4 @@ final class MockDataStore: DataStoreProtocol {
     func saveCities(_ cities: [CityJSON]) async {
         await repository.saveCities(cities)
     }
-}
+} 

@@ -12,11 +12,10 @@ struct CityDetailView: View {
     @State var viewModel: CityDetailViewModel
     @State private var mapRegion: MKCoordinateRegion
 
-    init(city: City) {
-        let detailViewModel = CityDetailViewModel(city: city)
-        _viewModel = State(initialValue: detailViewModel)
+    init(viewModel: CityDetailViewModel) {
+        _viewModel = State(initialValue: viewModel)
         _mapRegion = State(initialValue: MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: city.coord_lat, longitude: city.coord_lon),
+            center: CLLocationCoordinate2D(latitude: viewModel.city.coord_lat, longitude: viewModel.city.coord_lon),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
         ))
     }
@@ -96,7 +95,8 @@ struct InfoRow: View {
 
 #Preview {
     let previewCity = City(id: 5435, name: "Morelia", country: "MX", coord_lon: 101.5, coord_lat: 19.7, isFavorite: true)
+    let previewViewModel = CityDetailViewModel(city: previewCity)
     return NavigationView {
-        CityDetailView(city: previewCity)
+        CityDetailView(viewModel: previewViewModel)
     }
 } 

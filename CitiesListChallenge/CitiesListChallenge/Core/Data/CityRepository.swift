@@ -136,18 +136,6 @@ final class CityRepository: CityRepositoryProtocol {
         }
     }
     
-    func saveCities(_ cities: [CityJSON]) async {
-        do {
-            for cityJSON in cities {
-                let newCity = City(from: cityJSON)
-                modelContext.insert(newCity)
-            }
-            try modelContext.save()
-        } catch {
-            print("Error saving cities: \(error)")
-        }
-    }
-    
     func clearAllCities() async {
         do {
             try modelContext.delete(model: City.self)

@@ -12,21 +12,7 @@ import SwiftData
 final class DataStore: DataStoreProtocol {
     private let repository: CityRepositoryProtocol
     private let networkService: NetworkServiceProtocol
-    private var isDataLoaded = false
-    private var startTime: TimeInterval = 0
     private let chunkSize = 2000
-    
-    private static let initialDataLoadedKey = "initialDataLoaded"
-    
-    private let defaultSortDescriptor: [SortDescriptor<City>] = [
-        SortDescriptor(\City.name),
-        SortDescriptor(\City.country)
-    ]
-    
-    private var isInitialDataLoaded: Bool {
-        get { UserDefaults.standard.bool(forKey: Self.initialDataLoadedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.initialDataLoadedKey) }
-    }
     
     init(repository: CityRepositoryProtocol, networkService: NetworkServiceProtocol) {
         self.repository = repository
@@ -45,7 +31,6 @@ final class DataStore: DataStoreProtocol {
         // Verificar si ya hay ciudades en la base de datos
         let count = await repository.getCitiesCount()
         if count > 0 {
-            print("DataStore: Ya existen \(count) ciudades, no es necesario descargar")
             return
         }
         await downloadAndStoreCities()
@@ -53,21 +38,16 @@ final class DataStore: DataStoreProtocol {
     
     private func downloadAndStoreCities() async {
         do {
-            startTime = Date().timeIntervalSince1970
             let cityJSONs = try await networkService.downloadCityData()
             await repository.clearAllCities()
             let chunks = cityJSONs.chunked(into: chunkSize)
+            print("cities downloaded: \(cityJSONs.count) starting to save")
             for (_, chunk) in chunks.enumerated() {
                 await self.repository.saveCitiesFromJSON(chunk)
             }
-            
-            isInitialDataLoaded = true
-            isDataLoaded = true
+            print("cities saved")
         } catch {
             print("❌ Error during full refresh and store cities: \(error)")
-            // Reset flags on error
-            isInitialDataLoaded = false
-            isDataLoaded = false
         }
     }
     
@@ -88,8 +68,6 @@ final class DataStore: DataStoreProtocol {
     
     func clearAllData() async {
         await repository.clearAllCities()
-        isInitialDataLoaded = false
-        isDataLoaded = false
     }
 }
 

@@ -41,19 +41,6 @@ struct WeatherSection: View {
                 VStack(alignment: .leading, spacing: 12) {
                     // Main weather info
                     HStack {
-                        if let iconURL = viewModel.weatherIconURL {
-                            AsyncImage(url: iconURL) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 60, height: 60)
-                            } placeholder: {
-                                Image(systemName: "cloud")
-                                    .font(.title)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        
                         VStack(alignment: .leading) {
                             Text(viewModel.temperatureString)
                                 .font(.title)

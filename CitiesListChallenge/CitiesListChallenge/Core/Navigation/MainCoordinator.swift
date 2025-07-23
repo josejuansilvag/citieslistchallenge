@@ -54,7 +54,8 @@ final class MainCoordinator: ObservableCoordinatorProtocol, ViewModelFactory {
         case .cityList:
             Text("City List")
         case .cityDetail(let city):
-            CityDetailView(city: city)
+            let viewModel = makeCityDetailViewModel(for: city)
+            CityDetailView(viewModel: viewModel)
         case .mapView(let city):
             MapView(city: city)
         }
@@ -64,8 +65,9 @@ final class MainCoordinator: ObservableCoordinatorProtocol, ViewModelFactory {
     func view(for sheetRoute: SheetRoute) -> some View {
         switch sheetRoute {
         case .cityDetail(let city):
+            let viewModel = makeCityDetailViewModel(for: city)
             NavigationStack {
-                CityDetailView(city: city)
+                CityDetailView(viewModel: viewModel)
                     .navigationTitle("Details: \(city.name)")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar(content: {

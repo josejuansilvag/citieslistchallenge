@@ -159,7 +159,7 @@ final class MockDataStore: DataStoreProtocol {
         }
         do {
             let cities = try await networkService.downloadCityData()
-            await repository.saveCities(cities)
+            await repository.saveCitiesFromJSON(cities)
             isDataLoaded = true
             print("MockDataStore: Datos preparados")
         } catch {
@@ -186,6 +186,6 @@ final class MockDataStore: DataStoreProtocol {
     }
     
     func saveCities(_ cities: [CityJSON]) async {
-        await repository.saveCities(cities)
+        await repository.saveCitiesFromJSON(cities)
     }
 } 

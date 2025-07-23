@@ -25,22 +25,22 @@ struct UalaChallengeApp: App {
         }
     }()
 
-    var useMockData: Bool {
-        ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
+    var sharedDIContainer: DIContainer {
+        let useMockData = ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
+        return DIContainer(modelContainer: sharedModelContainer, useMockData: useMockData)
     }
 
     var body: some Scene {
         WindowGroup {
-            MainView()
+            MainView(diContainer: sharedDIContainer)
                 .onAppear {
                     resetDataForUITesting()
                 }
         }
-        .modelContainer(sharedModelContainer)
     }
     
     private func resetDataForUITesting() {
-        guard useMockData else {
+        guard ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting") else {
             return
         }
         
@@ -53,8 +53,7 @@ struct UalaChallengeApp: App {
                     context.delete(city)
                 }
                 try context.save()
-                let diContainer = DIContainer(modelContainer: sharedModelContainer, useMockData: useMockData)
-                let dataStore = diContainer.makeDataStore()
+                let dataStore = sharedDIContainer.makeDataStore()
                 await dataStore.prepareDataStore()
             } catch {
                 print("Error resetting data for UI testing: \(error)")

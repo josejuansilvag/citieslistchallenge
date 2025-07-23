@@ -11,22 +11,14 @@ import SwiftData
 struct MainView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @Environment(\.modelContext) private var modelContext
     
     @StateObject private var coordinator: MainCoordinator
     @State private var selectedCityForLandscapeMap: City? = nil
     @State private var cityListViewModel: CityListViewModel?
     
-    init() {
-        let modelContainer = try! ModelContainer(for: City.self)
-        let useMockData = ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
-        let diContainer = DIContainer(modelContainer: modelContainer, useMockData: useMockData)
+    init(diContainer: DIContainer) {
         let factory = CoordinatorFactory(diContainer: diContainer)
         _coordinator = StateObject(wrappedValue: factory.makeMainCoordinator())
-    }
-    
-    private var useMockData: Bool {
-        ProcessInfo.processInfo.arguments.contains("--useMockDataForUITesting")
     }
     
     var body: some View {
@@ -65,9 +57,7 @@ struct MainView: View {
     private func createViewModelIfNeeded() async {
         guard cityListViewModel == nil else { return }
         cityListViewModel = coordinator.makeCityListViewModel()
-        // Always prepare data store, whether using mock or real data
-        let dataStore = coordinator.getDIContainer().makeDataStore()
-        await dataStore.prepareDataStore()
+        // El viewModel se encargará de preparar los datos cuando sea necesario
     }
 }
 

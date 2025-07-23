@@ -98,7 +98,8 @@ final class CityCoordinator: ObservableObject {
     
     /// Crea la vista de detalle de una ciudad
     func makeCityDetailView(for city: City) -> CityDetailView {
-        return CityDetailView(city: city)
+        let viewModel = diContainer.makeCityDetailViewModel(for: city)
+        return CityDetailView(viewModel: viewModel)
     }
     
     /// Crea la vista de fila de ciudad

@@ -46,6 +46,11 @@ class CityDetailViewModel {
     // MARK: - Computed Properties
     var weatherIconURL: URL? {
         guard let icon = weatherInfo?.icon else { return nil }
+        // Si la URL ya tiene protocolo, usarla tal como viene
+        if icon.hasPrefix("http://") || icon.hasPrefix("https://") {
+            return URL(string: icon)
+        }
+        // Si no tiene protocolo, agregar https://
         return URL(string: "https://\(icon)")
     }
     

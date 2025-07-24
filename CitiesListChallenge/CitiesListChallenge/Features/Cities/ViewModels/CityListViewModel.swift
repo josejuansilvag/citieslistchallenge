@@ -8,27 +8,39 @@
 import Foundation
 import SwiftData
 
-@Observable @MainActor
-final class CityListViewModel {
+@MainActor
+final class CityListViewModel: ObservableObject {
     private let dataStore: DataStoreProtocol
     private var searchTask: Task<Void, Never>?
     
-    var searchText: String = "" {
+    @Published var searchText: String = "" {
         didSet {
             debounceSearch()
         }
     }
     
-    var showOnlyFavorites: Bool = false {
+    @Published var showOnlyFavorites: Bool = false {
         didSet {
             debounceSearch()
         }
     }
     
-    var cities: [City] = []
-    var isLoading = false
-    var errorMessage: String?
-    var hasMorePages = true
+    @Published var cities: [City] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var hasMorePages = true
+    
+    // MARK: - Progress Tracking
+    @Published var dataLoadingProgress: DataLoadingProgress = .idle
+    
+    var isDataLoading: Bool {
+        switch dataLoadingProgress {
+        case .idle, .completed, .error:
+            return false
+        case .downloadingCities, .processingCities, .savingCities:
+            return true
+        }
+    }
     
     private let pageSize = 50
     private var currentPage = 0
@@ -77,7 +89,16 @@ final class CityListViewModel {
         hasInitialized = true
         
         isLoading = true
-        await dataStore.prepareDataStore()
+        await dataStore.prepareDataStore { [weak self] (progress: DataLoadingProgress) in
+            Task { @MainActor in
+                guard let self = self else { return }
+                
+                            // Only update if the progress actually changed
+            if self.dataLoadingProgress != progress {
+                self.dataLoadingProgress = progress
+            }
+            }
+        }
         isLoading = false
         
         /// Reset y cargar primera página de forma async

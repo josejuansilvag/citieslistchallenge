@@ -54,7 +54,9 @@ struct UalaChallengeApp: App {
                 }
                 try context.save()
                 let dataStore = sharedDIContainer.makeDataStore()
-                await dataStore.prepareDataStore()
+                await dataStore.prepareDataStore { progress in
+                    print("UI Testing Progress: \(progress.description)")
+                }
             } catch {
                 print("Error resetting data for UI testing: \(error)")
             }

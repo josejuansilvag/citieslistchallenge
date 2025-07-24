@@ -10,7 +10,7 @@ import MapKit
 import SwiftData
 
 struct LandscapeView: View {
-    @State var viewModel: CityListViewModel
+    @ObservedObject var viewModel: CityListViewModel
     @Binding var selectedCityForLandscapeMap: City?
     @ObservedObject var coordinator: MainCoordinator
     

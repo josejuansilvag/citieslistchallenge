@@ -151,18 +151,44 @@ final class MockDataStore: DataStoreProtocol {
         self.networkService = networkService
     }
     
-    func prepareDataStore() async {
+    func prepareDataStore(progressCallback: @escaping (DataLoadingProgress) -> Void) async {
         print("MockDataStore: prepareDataStore llamado")
         if isDataLoaded {
             print("MockDataStore: Ya está cargado, retornando")
+            await MainActor.run {
+                progressCallback(.completed)
+            }
             return
         }
+        
+        // Simular progreso para el mock
+        await MainActor.run {
+            progressCallback(.downloadingCities)
+        }
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 segundos
+        
         do {
             let cities = try await networkService.downloadCityData()
+            await MainActor.run {
+                progressCallback(.processingCities(total: cities.count, current: 0))
+            }
+            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 segundos
+            
             await repository.saveCitiesFromJSON(cities)
+            await MainActor.run {
+                progressCallback(.savingCities(total: cities.count, current: cities.count))
+            }
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 segundos
+            
             isDataLoaded = true
+            await MainActor.run {
+                progressCallback(.completed)
+            }
             print("MockDataStore: Datos preparados")
         } catch {
+            await MainActor.run {
+                progressCallback(.error(error.localizedDescription))
+            }
             print("Mock DataStore error: \(error)")
         }
     }

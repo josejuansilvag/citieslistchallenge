@@ -14,6 +14,10 @@ final class DataStore: DataStoreProtocol {
     private let networkService: NetworkServiceProtocol
     private let chunkSize = 2000
     
+    // MARK: - Progress Reporting
+    private var progressCallback: ((DataLoadingProgress) -> Void)?
+    private let progressUpdateFrequency = 3 // Update every 3 chunks
+    
     init(repository: CityRepositoryProtocol, networkService: NetworkServiceProtocol) {
         self.repository = repository
         self.networkService = networkService
@@ -27,10 +31,15 @@ final class DataStore: DataStoreProtocol {
     
     // MARK: - Data Preparation
     
-    func prepareDataStore() async {
+    func prepareDataStore(progressCallback: @escaping (DataLoadingProgress) -> Void) async {
+        self.progressCallback = progressCallback
+        
         // Verificar si ya hay ciudades en la base de datos
         let count = await repository.getCitiesCount()
         if count > 0 {
+            await MainActor.run {
+                progressCallback(.completed)
+            }
             return
         }
         await downloadAndStoreCities()
@@ -38,15 +47,53 @@ final class DataStore: DataStoreProtocol {
     
     private func downloadAndStoreCities() async {
         do {
-            let cityJSONs = try await networkService.downloadCityData()
-            await repository.clearAllCities()
-            let chunks = cityJSONs.chunked(into: chunkSize)
-            print("cities downloaded: \(cityJSONs.count) starting to save")
-            for (_, chunk) in chunks.enumerated() {
-                await self.repository.saveCitiesFromJSON(chunk)
+            // Step 1: Download cities
+            print("📥 Starting download of cities data...")
+            await MainActor.run {
+                progressCallback?(.downloadingCities)
             }
-            print("cities saved")
+            let cityJSONs = try await networkService.downloadCityData()
+            
+            // Step 2: Clear existing data
+            await repository.clearAllCities()
+            
+            // Step 3: Process and save in chunks
+            let chunks = cityJSONs.chunked(into: chunkSize)
+            let totalChunks = chunks.count
+            
+            print("⚙️ Processing \(cityJSONs.count) cities in \(totalChunks) chunks...")
+            await MainActor.run {
+                progressCallback?(.processingCities(total: totalChunks, current: 0))
+            }
+            
+            for (index, chunk) in chunks.enumerated() {
+                await self.repository.saveCitiesFromJSON(chunk)
+                
+                // Update progress every N chunks or on the last chunk
+                let shouldUpdate = (index + 1) % progressUpdateFrequency == 0 || (index + 1) == totalChunks
+                if shouldUpdate {
+                    await MainActor.run {
+                        progressCallback?(.savingCities(total: totalChunks, current: index + 1))
+                    }
+                }
+            }
+            
+            // Ensure we show 100% completion before marking as completed
+            await MainActor.run {
+                progressCallback?(.savingCities(total: totalChunks, current: totalChunks))
+            }
+            
+            // Small delay to show 100% before completing
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
+            print("✅ Data loading completed successfully!")
+            await MainActor.run {
+                progressCallback?(.completed)
+            }
         } catch {
+            await MainActor.run {
+                progressCallback?(.error(error.localizedDescription))
+            }
             print("❌ Error during full refresh and store cities: \(error)")
         }
     }
